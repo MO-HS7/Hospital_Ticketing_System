@@ -18,20 +18,16 @@ export default defineNuxtConfig({
   // i18n configuration (v9 compatible)
   i18n: {
     locales: [
-      { code: 'en', language: 'en-US', dir: 'ltr', file: 'en.json', name: 'English' },
-      { code: 'ar', language: 'ar-SA', dir: 'rtl', file: 'ar.json', name: 'العربية' },
+      { code: 'en', language: 'en-US', dir: 'ltr', files: ['en.json'], name: 'English' },
+      { code: 'ar', language: 'ar-SA', dir: 'rtl', files: ['ar.json'], name: 'العربية' },
     ],
     defaultLocale: 'en',
-    langDir: 'locales',
     lazy: true,
     strategy: 'prefix_except_default',
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_locale',
       redirectOn: 'root',
-    },
-    bundle: {
-      fullInstall: true,
     },
   },
 
