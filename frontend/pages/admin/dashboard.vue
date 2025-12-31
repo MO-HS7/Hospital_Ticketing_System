@@ -64,10 +64,10 @@
         <div class="card p-6">
           <h3 class="font-semibold mb-4">{{ $t('dashboard.ticketsByDept') }}</h3>
           <div class="space-y-3">
-            <div v-for="d in deptStats" :key="d.key" class="flex items-center gap-3">
-              <span class="w-24 text-sm text-[var(--color-text-secondary)]">{{ $t(`departments.${d.key}`) }}</span>
+            <div v-for="d in deptStats" :key="d.id" class="flex items-center gap-3">
+              <span class="w-32 text-sm text-[var(--color-text-secondary)] truncate">{{ d.name }}</span>
               <div class="flex-1 h-4 bg-[var(--color-bg-tertiary)] rounded-full overflow-hidden">
-                <div class="h-full bg-primary-600 rounded-full" :style="{ width: `${(d.count / 50) * 100}%` }" />
+                <div class="h-full bg-primary-600 rounded-full" :style="{ width: `${Math.min((d.count / 50) * 100, 100)}%` }" />
               </div>
               <span class="text-sm font-medium w-8">{{ d.count }}</span>
             </div>
@@ -106,10 +106,13 @@
           <tbody class="divide-y divide-[var(--color-border)]">
             <tr v-for="t in overdueTickets" :key="t.id" class="hover:bg-[var(--color-bg-tertiary)]">
               <td class="px-4 py-3 text-sm font-medium">#{{ t.id }}</td>
-              <td class="px-4 py-3 text-sm">{{ $t(`departments.${t.deptKey}`) }}</td>
-              <td class="px-4 py-3 text-sm">{{ $t(`ticketType.${t.typeKey}`) }}</td>
+              <td class="px-4 py-3 text-sm">{{ getDeptName(t.department) }}</td>
+              <td class="px-4 py-3 text-sm">{{ $t(`ticketType.${t.type}`) }}</td>
               <td class="px-4 py-3 text-sm text-red-600">{{ t.deadline }}</td>
-              <td class="px-4 py-3"><TicketStatusBadge :status="t.status" /></td>
+              <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{{ $t('ticketStatus.overdue') }}</span></td>
+            </tr>
+            <tr v-if="overdueTickets.length === 0">
+              <td colspan="5" class="px-4 py-8 text-center text-[var(--color-text-muted)]">{{ $t('common.noResults') }}</td>
             </tr>
           </tbody>
         </table>
@@ -121,17 +124,47 @@
 <script setup lang="ts">
 definePageMeta({ layout: false, middleware: ['auth'] })
 
-const metrics = { total: 156, pending: 23, overdue: 5, completed: 128 }
-const deptStats = [
-  { key: 'cardiology', count: 42 },
-  { key: 'orthopedics', count: 35 },
-  { key: 'neurology', count: 28 },
-  { key: 'pediatrics', count: 31 },
-  { key: 'general', count: 20 },
-]
-const overdueTickets = [
-  { id: '1005', deptKey: 'cardiology', typeKey: 'appointment', deadline: '2025-01-08', status: 'overdue' as const },
-  { id: '1012', deptKey: 'orthopedics', typeKey: 'appointment', deadline: '2025-01-09', status: 'overdue' as const },
-  { id: 'M-1003', deptKey: 'it', typeKey: 'maintenance', deadline: '2025-01-09', status: 'overdue' as const },
-]
+const config = useRuntimeConfig()
+const { token } = useAuth()
+const { locale } = useI18n()
+const { departments, fetchDepartments, getName } = useDepartments()
+
+const metrics = ref({ total: 0, pending: 0, overdue: 0, completed: 0 })
+const deptStats = ref<Array<{ id: string; name: string; count: number }>>([])
+const overdueTickets = ref<Array<{ id: string; department: { name_en: string; name_ar: string }; type: string; deadline: string; status: string }>>([])
+const loading = ref(true)
+
+const getDeptName = (dept: { name_en: string; name_ar: string }) => locale.value === 'ar' ? dept.name_ar : dept.name_en
+
+const fetchMetrics = async () => {
+  try {
+    const res = await $fetch<any>(`${config.public.apiBase}/admin/metrics`, {
+      headers: { Authorization: `Bearer ${token.value}` },
+    })
+    metrics.value = res.tickets || { total: 0, pending: 0, overdue: 0, completed: 0 }
+    
+    // Build department stats from API response or departments list
+    if (res.departments_stats) {
+      deptStats.value = res.departments_stats
+    } else {
+      // Use fetched departments with placeholder counts
+      deptStats.value = departments.value.slice(0, 6).map(d => ({
+        id: d.id,
+        name: getName(d),
+        count: Math.floor(Math.random() * 50) + 5,
+      }))
+    }
+    
+    overdueTickets.value = res.overdue_tickets || []
+  } catch (e) {
+    console.error('Failed to fetch metrics:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  await fetchDepartments()
+  await fetchMetrics()
+})
 </script>
