@@ -20,7 +20,7 @@
           </div>
 
           <!-- Login Form -->
-          <form @submit.prevent="handleLogin" class="space-y-4">
+          <form class="space-y-4" @submit.prevent="handleLogin">
             <div>
               <label for="email" class="block text-sm font-medium mb-1.5">{{ $t('auth.email') }}</label>
               <input
@@ -123,9 +123,17 @@ const form = reactive({
 })
 
 const handleLogin = async () => {
-  console.log('handleLogin called', { email: form.email, password: form.password.length + ' chars' })
+  console.log('=== handleLogin CALLED ===')
+  console.log('Email:', form.email)
+  console.log('Password length:', form.password.length)
+  
+  if (!form.email || !form.password) {
+    console.error('Missing email or password')
+    return
+  }
+  
   const success = await login({ email: form.email, password: form.password })
-  console.log('login result:', success)
+  console.log('Login result:', success)
   if (success) {
     // Check for redirect query param
     const redirect = route.query.redirect as string
