@@ -38,17 +38,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tickets/{ticket}/accept', [\App\Http\Controllers\Api\TicketController::class, 'accept']);
     Route::post('/tickets/{ticket}/complete', [\App\Http\Controllers\Api\TicketController::class, 'complete']);
     
-    // Departments
-    Route::apiResource('departments', \App\Http\Controllers\Api\DepartmentController::class);
-    
     // Users (Admin only)
     Route::apiResource('users', \App\Http\Controllers\Api\UserController::class);
     Route::post('/users/{user}/activate', [\App\Http\Controllers\Api\UserController::class, 'activate']);
     
-    // Admin Dashboard
+    // Admin Dashboard & Admin-only routes
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         Route::get('/metrics', [\App\Http\Controllers\Api\AdminController::class, 'metrics']);
         Route::get('/audit-log', [\App\Http\Controllers\Api\AdminController::class, 'auditLog']);
+        
+        // Admin Departments CRUD
+        Route::get('/departments', [\App\Http\Controllers\Api\DepartmentController::class, 'adminIndex']);
+        Route::get('/departments/stats', [\App\Http\Controllers\Api\DepartmentController::class, 'stats']);
+        Route::post('/departments', [\App\Http\Controllers\Api\DepartmentController::class, 'store']);
+        Route::get('/departments/{department}', [\App\Http\Controllers\Api\DepartmentController::class, 'show']);
+        Route::put('/departments/{department}', [\App\Http\Controllers\Api\DepartmentController::class, 'update']);
+        Route::delete('/departments/{department}', [\App\Http\Controllers\Api\DepartmentController::class, 'destroy']);
     });
     
     // Chatbot

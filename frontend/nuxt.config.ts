@@ -12,10 +12,9 @@ export default defineNuxtConfig({
 
   typescript: {
     strict: true,
-    typeCheck: false, // Disable to avoid vite-plugin-checker lib.dom.d.ts errors
+    typeCheck: false,
   },
 
-  // i18n configuration (v9 compatible)
   i18n: {
     locales: [
       { code: 'en', language: 'en-US', dir: 'ltr', name: 'English' },
@@ -32,7 +31,6 @@ export default defineNuxtConfig({
     vueI18n: '../i18n.config.ts',
   },
 
-  // Color mode (dark/light)
   colorMode: {
     classSuffix: '',
     preference: 'system',
@@ -40,45 +38,29 @@ export default defineNuxtConfig({
     storageKey: 'hospital-theme',
   },
 
-  // Tailwind CSS
   tailwindcss: {
     cssPath: '~/assets/css/tailwind.css',
     configPath: 'tailwind.config.ts',
   },
 
-  // App configuration
   app: {
     head: {
       title: 'Hospital Ticketing System',
-      htmlAttrs: {
-        lang: 'en',
-      },
+      htmlAttrs: { lang: 'en' },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'Hospital Ticketing & Booking System with Chatbot' },
+        { name: 'description', content: 'Hospital Ticketing & Booking System' },
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-        // Google Fonts: Inter + Cairo
-        {
-          rel: 'preconnect',
-          href: 'https://fonts.googleapis.com',
-        },
-        {
-          rel: 'preconnect',
-          href: 'https://fonts.gstatic.com',
-          crossorigin: '',
-        },
-        {
-          rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap',
-        },
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap' },
       ],
     },
   },
 
-  // Runtime config for API
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000/api',

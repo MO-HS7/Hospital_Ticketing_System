@@ -25,7 +25,27 @@
         "neurology": "Neurology",
         "pediatrics": "Pediatrics",
         "general": "General",
-        "it": "IT"
+        "it": "IT",
+        "subtitle": "Manage hospital departments",
+        "add": "Add Department",
+        "edit": "Edit Department",
+        "active": "Active",
+        "inactive": "Inactive",
+        "total": "Total",
+        "withTickets": "With Tickets",
+        "noDepartments": "No departments found",
+        "nameEn": "Name (English)",
+        "nameAr": "Name (Arabic)",
+        "descriptionEn": "Description (English)",
+        "descriptionAr": "Description (Arabic)",
+        "iconKey": "Icon Key",
+        "sortOrder": "Sort Order",
+        "isActive": "Active",
+        "actions": "Actions",
+        "deleteConfirm": "Delete Department?",
+        "deleteWarning": "This action cannot be undone. Department with tickets cannot be deleted.",
+        "showing": "Showing",
+        "of": "of"
     },
     "table": {
         "id": "ID"
@@ -178,7 +198,9 @@
         "confirm": "Confirm",
         "yes": "Yes",
         "no": "No",
-        "close": "Close"
+        "close": "Close",
+        "previous": "Previous",
+        "next": "Next"
     },
     "about": {
         "title": "About",
