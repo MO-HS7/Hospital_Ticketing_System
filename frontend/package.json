@@ -3,6 +3,9 @@
     "version": "0.1.0",
     "private": true,
     "type": "module",
+    "overrides": {
+        "esbuild": "0.24.0"
+    },
     "scripts": {
         "build": "node ./node_modules/nuxt/bin/nuxt.mjs build",
         "dev": "node ./node_modules/nuxt/bin/nuxt.mjs dev",
