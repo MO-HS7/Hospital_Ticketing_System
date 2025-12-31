@@ -16,20 +16,14 @@ export default defineNuxtConfig({
   },
 
   i18n: {
-    locales: [
-      { code: 'en', language: 'en-US', dir: 'ltr', name: 'English' },
-      { code: 'ar', language: 'ar-SA', dir: 'rtl', name: 'العربية' },
-    ],
+    locales: ['en', 'ar'],
     defaultLocale: 'en',
-    lazy: false,
     strategy: 'no_prefix',
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_locale',
-      cookieSecure: false,
-      alwaysRedirect: false,
     },
-    vueI18n: './i18n.config.ts',
+    vueI18n: '~/i18n.config.ts',
   },
 
   colorMode: {
