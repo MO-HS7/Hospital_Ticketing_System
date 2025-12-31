@@ -22,13 +22,14 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'en',
     lazy: false,
-    strategy: 'prefix_except_default',
+    strategy: 'no_prefix',
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_locale',
-      redirectOn: 'root',
+      cookieSecure: false,
+      alwaysRedirect: false,
     },
-    vueI18n: '../i18n.config.ts',
+    vueI18n: './i18n.config.ts',
   },
 
   colorMode: {

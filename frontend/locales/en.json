@@ -26,6 +26,7 @@
         "pediatrics": "Pediatrics",
         "general": "General",
         "it": "IT",
+        "name": "Name",
         "subtitle": "Manage hospital departments",
         "add": "Add Department",
         "edit": "Edit Department",

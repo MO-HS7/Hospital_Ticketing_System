@@ -19,15 +19,14 @@
           <div class="flex-1">
             <input v-model="filters.search" type="text" class="input w-full" :placeholder="$t('common.search') + '...'" @input="debouncedFetch" />
           </div>
-          <select v-model="filters.is_active" class="input w-full md:w-48" @change="fetchDepartments">
+          <select v-model="filters.is_active" class="input w-full md:w-48" @change="fetchDepartments()">
             <option value="">{{ $t('filters.all') }}</option>
             <option value="1">{{ $t('departments.active') }}</option>
             <option value="0">{{ $t('departments.inactive') }}</option>
           </select>
-          <select v-model="filters.sort_by" class="input w-full md:w-48" @change="fetchDepartments">
+          <select v-model="filters.sort_by" class="input w-full md:w-48" @change="fetchDepartments()">
             <option value="sort_order">{{ $t('departments.sortOrder') }}</option>
-            <option value="name_en">{{ $t('departments.nameEn') }}</option>
-            <option value="name_ar">{{ $t('departments.nameAr') }}</option>
+            <option :value="locale === 'ar' ? 'name_ar' : 'name_en'">{{ $t('departments.name') }}</option>
             <option value="updated_at">{{ $t('tickets.updatedAt') }}</option>
           </select>
         </div>
@@ -66,8 +65,7 @@
         <table v-else class="w-full">
           <thead class="bg-[var(--color-bg-tertiary)]">
             <tr>
-              <th class="px-4 py-3 text-start text-sm font-medium">{{ $t('departments.nameEn') }}</th>
-              <th class="px-4 py-3 text-start text-sm font-medium">{{ $t('departments.nameAr') }}</th>
+              <th class="px-4 py-3 text-start text-sm font-medium">{{ $t('departments.name') }}</th>
               <th class="px-4 py-3 text-start text-sm font-medium hidden md:table-cell">{{ $t('departments.sortOrder') }}</th>
               <th class="px-4 py-3 text-start text-sm font-medium">{{ $t('tickets.status') }}</th>
               <th class="px-4 py-3 text-start text-sm font-medium hidden lg:table-cell">{{ $t('tickets.updatedAt') }}</th>
@@ -76,8 +74,7 @@
           </thead>
           <tbody class="divide-y divide-[var(--color-border)]">
             <tr v-for="dept in departments" :key="dept.id" class="hover:bg-[var(--color-bg-tertiary)]">
-              <td class="px-4 py-3 text-sm font-medium">{{ dept.name_en }}</td>
-              <td class="px-4 py-3 text-sm" dir="rtl">{{ dept.name_ar }}</td>
+              <td class="px-4 py-3 text-sm font-medium">{{ getLocalizedName(dept) }}</td>
               <td class="px-4 py-3 text-sm hidden md:table-cell">{{ dept.sort_order }}</td>
               <td class="px-4 py-3">
                 <span :class="dept.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'" class="px-2 py-1 rounded-full text-xs font-medium">
@@ -184,7 +181,7 @@
           <div class="relative bg-[var(--color-bg-primary)] rounded-xl shadow-xl w-full max-w-md p-6">
             <h2 class="text-xl font-semibold text-[var(--color-text-primary)]">{{ $t('departments.deleteConfirm') }}</h2>
             <p class="mt-2 text-sm text-[var(--color-text-muted)]">{{ $t('departments.deleteWarning') }}</p>
-            <p class="mt-2 font-medium">{{ deletingDept?.name_en }} / {{ deletingDept?.name_ar }}</p>
+            <p class="mt-2 font-medium">{{ deletingDept ? getLocalizedName(deletingDept) : '' }}</p>
             <div v-if="deleteError" class="mt-4 p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm">{{ deleteError }}</div>
             <div class="flex gap-3 mt-6">
               <button @click="closeDeleteModal" class="btn-secondary flex-1">{{ $t('common.cancel') }}</button>
@@ -219,6 +216,9 @@ interface Department {
 
 const config = useRuntimeConfig()
 const { token } = useAuth()
+const { locale } = useI18n()
+
+const getLocalizedName = (dept: Department) => locale.value === 'ar' ? dept.name_ar : dept.name_en
 
 const loading = ref(true)
 const departments = ref<Department[]>([])
