@@ -1,22 +1,25 @@
-export default defineNuxtPlugin(() => {
-  const { locale } = useI18n()
-
+export default defineNuxtPlugin((nuxtApp) => {
   const updateDirection = (loc: string) => {
     const dir = loc === 'ar' ? 'rtl' : 'ltr'
     const lang = loc === 'ar' ? 'ar' : 'en'
     
-    // Update document attributes
     if (typeof document !== 'undefined') {
       document.documentElement.dir = dir
       document.documentElement.lang = lang
     }
   }
 
-  // Set initial direction
-  updateDirection(locale.value)
-
-  // Watch for locale changes
-  watch(locale, (newLocale) => {
-    updateDirection(newLocale)
+  // Access i18n from nuxtApp.$i18n
+  nuxtApp.hook('app:mounted', () => {
+    const i18n = nuxtApp.$i18n as any
+    if (i18n?.locale) {
+      // Set initial direction
+      updateDirection(i18n.locale.value || i18n.locale)
+      
+      // Watch for locale changes
+      watch(() => i18n.locale.value || i18n.locale, (newLocale: string) => {
+        updateDirection(newLocale)
+      })
+    }
   })
 })
