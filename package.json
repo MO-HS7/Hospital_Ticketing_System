@@ -1,0 +1,17 @@
+{
+  "name": "hospital-ticketing-system",
+  "version": "0.1.0",
+  "description": "Hospital Ticketing & Booking System with Chatbot",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "lint:frontend": "cd frontend && npm run lint",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "keywords": ["hospital", "ticketing", "booking", "chatbot", "nuxt", "laravel"],
+  "author": "",
+  "license": "ISC"
+}
