@@ -18,17 +18,18 @@ export default defineNuxtConfig({
   // i18n configuration (v9 compatible)
   i18n: {
     locales: [
-      { code: 'en', language: 'en-US', dir: 'ltr', files: ['en.json'], name: 'English' },
-      { code: 'ar', language: 'ar-SA', dir: 'rtl', files: ['ar.json'], name: 'العربية' },
+      { code: 'en', language: 'en-US', dir: 'ltr', name: 'English' },
+      { code: 'ar', language: 'ar-SA', dir: 'rtl', name: 'العربية' },
     ],
     defaultLocale: 'en',
-    lazy: true,
+    lazy: false,
     strategy: 'prefix_except_default',
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_locale',
       redirectOn: 'root',
     },
+    vueI18n: '../i18n.config.ts',
   },
 
   // Color mode (dark/light)
