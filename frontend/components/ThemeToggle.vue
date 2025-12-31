@@ -6,7 +6,7 @@
   >
     <!-- Sun icon (light mode) -->
     <svg 
-      v-if="colorMode.value === 'light'" 
+      v-if="currentMode === 'light'" 
       class="w-5 h-5 text-amber-500" 
       fill="none" 
       stroke="currentColor" 
@@ -17,7 +17,7 @@
     
     <!-- Moon icon (dark mode) -->
     <svg 
-      v-else-if="colorMode.value === 'dark'" 
+      v-else-if="currentMode === 'dark'" 
       class="w-5 h-5 text-primary-400" 
       fill="none" 
       stroke="currentColor" 
@@ -42,9 +42,12 @@
 <script setup lang="ts">
 const colorMode = useColorMode()
 
+// Use preference for cycling, not the resolved value
+const currentMode = computed(() => colorMode.preference)
+
 const nextMode = computed(() => {
-  if (colorMode.value === 'light') return 'dark'
-  if (colorMode.value === 'dark') return 'system'
+  if (currentMode.value === 'light') return 'dark'
+  if (currentMode.value === 'dark') return 'system'
   return 'light'
 })
 
