@@ -2,8 +2,11 @@
   <div class="min-h-screen bg-[var(--color-bg-secondary)] flex">
     <!-- Sidebar -->
     <aside 
-      class="fixed inset-y-0 z-40 w-64 bg-[var(--color-bg-primary)] border-e border-[var(--color-border)] transform transition-transform lg:translate-x-0 ltr:left-0 rtl:right-0"
-      :class="sidebarOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'"
+      class="fixed inset-y-0 start-0 z-40 w-64 bg-[var(--color-bg-primary)] border-e border-[var(--color-border)] transition-transform duration-200"
+      :class="[
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        'lg:translate-x-0'
+      ]"
     >
       <!-- Logo -->
       <div class="h-16 flex items-center gap-3 px-4 border-b border-[var(--color-border)]">
