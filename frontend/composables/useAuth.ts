@@ -82,14 +82,19 @@ export const useAuth = () => {
 
     // Real API login
     async function login(credentials: LoginCredentials): Promise<boolean> {
+        console.log('[useAuth] login called with:', credentials.email)
+        console.log('[useAuth] apiBase:', config.public.apiBase)
         loading.value = true
         error.value = null
 
         try {
-            const response = await $fetch<{ token: string; user: ApiUser }>(`${config.public.apiBase}/auth/login`, {
+            const url = `${config.public.apiBase}/auth/login`
+            console.log('[useAuth] Fetching:', url)
+            const response = await $fetch<{ token: string; user: ApiUser }>(url, {
                 method: 'POST',
                 body: credentials,
             })
+            console.log('[useAuth] Response received:', response.user?.email)
 
             token.value = response.token
             user.value = transformUser(response.user)

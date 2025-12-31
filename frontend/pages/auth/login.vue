@@ -58,8 +58,7 @@
             </div>
 
             <button
-              type="button"
-              @click="handleLogin"
+              type="submit"
               class="btn-primary w-full py-3"
               :disabled="loading"
             >
