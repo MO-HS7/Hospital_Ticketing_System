@@ -19,6 +19,17 @@
         "faq": "FAQ",
         "contact": "Contact"
     },
+    "departments": {
+        "cardiology": "Cardiology",
+        "orthopedics": "Orthopedics",
+        "neurology": "Neurology",
+        "pediatrics": "Pediatrics",
+        "general": "General",
+        "it": "IT"
+    },
+    "table": {
+        "id": "ID"
+    },
     "roles": {
         "title": "Select Your Role",
         "subtitle": "Choose how you want to access the system",

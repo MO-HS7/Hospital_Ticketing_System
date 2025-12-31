@@ -64,8 +64,8 @@
         <div class="card p-6">
           <h3 class="font-semibold mb-4">{{ $t('dashboard.ticketsByDept') }}</h3>
           <div class="space-y-3">
-            <div v-for="d in deptStats" :key="d.name" class="flex items-center gap-3">
-              <span class="w-24 text-sm text-[var(--color-text-secondary)]">{{ d.name }}</span>
+            <div v-for="d in deptStats" :key="d.key" class="flex items-center gap-3">
+              <span class="w-24 text-sm text-[var(--color-text-secondary)]">{{ $t(`departments.${d.key}`) }}</span>
               <div class="flex-1 h-4 bg-[var(--color-bg-tertiary)] rounded-full overflow-hidden">
                 <div class="h-full bg-primary-600 rounded-full" :style="{ width: `${(d.count / 50) * 100}%` }" />
               </div>
@@ -76,9 +76,9 @@
         <div class="card p-6">
           <h3 class="font-semibold mb-4">{{ $t('dashboard.staffCount') }}</h3>
           <div class="grid grid-cols-3 gap-4 text-center">
-            <div><p class="text-3xl font-bold text-cyan-600">12</p><p class="text-sm text-[var(--color-text-muted)]">Doctors</p></div>
-            <div><p class="text-3xl font-bold text-amber-600">5</p><p class="text-sm text-[var(--color-text-muted)]">Maintenance</p></div>
-            <div><p class="text-3xl font-bold text-rose-600">4</p><p class="text-sm text-[var(--color-text-muted)]">Reception</p></div>
+            <div><p class="text-3xl font-bold text-cyan-600">12</p><p class="text-sm text-[var(--color-text-muted)]">{{ $t('staffTypes.doctor') }}</p></div>
+            <div><p class="text-3xl font-bold text-amber-600">5</p><p class="text-sm text-[var(--color-text-muted)]">{{ $t('staffTypes.maintenance') }}</p></div>
+            <div><p class="text-3xl font-bold text-rose-600">4</p><p class="text-sm text-[var(--color-text-muted)]">{{ $t('staffTypes.reception') }}</p></div>
           </div>
         </div>
       </div>
@@ -88,26 +88,26 @@
         <div class="p-4 border-b border-[var(--color-border)] flex items-center justify-between">
           <h3 class="font-semibold">{{ $t('dashboard.recentOverdue') }}</h3>
           <select class="input w-auto text-sm">
-            <option>All Departments</option>
-            <option>Cardiology</option>
-            <option>Orthopedics</option>
+            <option>{{ $t('filters.all') }} {{ $t('nav.departments') }}</option>
+            <option>{{ $t('departments.cardiology') }}</option>
+            <option>{{ $t('departments.orthopedics') }}</option>
           </select>
         </div>
         <table class="w-full">
           <thead class="bg-[var(--color-bg-tertiary)]">
             <tr>
-              <th class="px-4 py-3 text-start text-sm font-medium">ID</th>
-              <th class="px-4 py-3 text-start text-sm font-medium">Department</th>
-              <th class="px-4 py-3 text-start text-sm font-medium">Type</th>
-              <th class="px-4 py-3 text-start text-sm font-medium">Deadline</th>
-              <th class="px-4 py-3 text-start text-sm font-medium">Status</th>
+              <th class="px-4 py-3 text-start text-sm font-medium">{{ $t('table.id') }}</th>
+              <th class="px-4 py-3 text-start text-sm font-medium">{{ $t('tickets.department') }}</th>
+              <th class="px-4 py-3 text-start text-sm font-medium">{{ $t('filters.type') }}</th>
+              <th class="px-4 py-3 text-start text-sm font-medium">{{ $t('tickets.deadline') }}</th>
+              <th class="px-4 py-3 text-start text-sm font-medium">{{ $t('tickets.status') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-[var(--color-border)]">
             <tr v-for="t in overdueTickets" :key="t.id" class="hover:bg-[var(--color-bg-tertiary)]">
               <td class="px-4 py-3 text-sm font-medium">#{{ t.id }}</td>
-              <td class="px-4 py-3 text-sm">{{ t.dept }}</td>
-              <td class="px-4 py-3 text-sm">{{ t.type }}</td>
+              <td class="px-4 py-3 text-sm">{{ $t(`departments.${t.deptKey}`) }}</td>
+              <td class="px-4 py-3 text-sm">{{ $t(`ticketType.${t.typeKey}`) }}</td>
               <td class="px-4 py-3 text-sm text-red-600">{{ t.deadline }}</td>
               <td class="px-4 py-3"><TicketStatusBadge :status="t.status" /></td>
             </tr>
@@ -123,15 +123,15 @@ definePageMeta({ layout: false, middleware: ['auth'] })
 
 const metrics = { total: 156, pending: 23, overdue: 5, completed: 128 }
 const deptStats = [
-  { name: 'Cardiology', count: 42 },
-  { name: 'Orthopedics', count: 35 },
-  { name: 'Neurology', count: 28 },
-  { name: 'Pediatrics', count: 31 },
-  { name: 'General', count: 20 },
+  { key: 'cardiology', count: 42 },
+  { key: 'orthopedics', count: 35 },
+  { key: 'neurology', count: 28 },
+  { key: 'pediatrics', count: 31 },
+  { key: 'general', count: 20 },
 ]
 const overdueTickets = [
-  { id: '1005', dept: 'Cardiology', type: 'Appointment', deadline: '2025-01-08', status: 'overdue' as const },
-  { id: '1012', dept: 'Orthopedics', type: 'Appointment', deadline: '2025-01-09', status: 'overdue' as const },
-  { id: 'M-1003', dept: 'IT', type: 'Maintenance', deadline: '2025-01-09', status: 'overdue' as const },
+  { id: '1005', deptKey: 'cardiology', typeKey: 'appointment', deadline: '2025-01-08', status: 'overdue' as const },
+  { id: '1012', deptKey: 'orthopedics', typeKey: 'appointment', deadline: '2025-01-09', status: 'overdue' as const },
+  { id: 'M-1003', deptKey: 'it', typeKey: 'maintenance', deadline: '2025-01-09', status: 'overdue' as const },
 ]
 </script>

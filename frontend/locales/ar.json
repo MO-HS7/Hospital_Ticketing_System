@@ -19,6 +19,17 @@
         "faq": "الأسئلة الشائعة",
         "contact": "تواصل معنا"
     },
+    "departments": {
+        "cardiology": "أمراض القلب",
+        "orthopedics": "العظام",
+        "neurology": "الأعصاب",
+        "pediatrics": "الأطفال",
+        "general": "العام",
+        "it": "تقنية المعلومات"
+    },
+    "table": {
+        "id": "الرقم"
+    },
     "roles": {
         "title": "اختر دورك",
         "subtitle": "اختر طريقة الوصول للنظام",
