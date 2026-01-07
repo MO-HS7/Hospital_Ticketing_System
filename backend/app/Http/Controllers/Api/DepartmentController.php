@@ -6,31 +6,40 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Cache;
 
 class DepartmentController extends Controller
 {
     /**
      * Public: List active departments for authenticated users
+     * Cached for 5 minutes to reduce DB load
      */
     public function index(Request $request)
     {
-        $query = Department::active()->ordered();
+        $search = $request->get('search', '');
+        $cacheKey = 'departments:active:' . md5($search);
         
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name_en', 'like', "%{$search}%")
-                  ->orWhere('name_ar', 'like', "%{$search}%");
-            });
-        }
+        // Cache for 5 minutes (300 seconds)
+        $result = Cache::remember($cacheKey, 300, function () use ($search) {
+            $query = Department::active()->ordered()
+                ->select(['id', 'name_en', 'name_ar', 'slug', 'icon_key', 'sort_order']);
+            
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name_en', 'like', "%{$search}%")
+                      ->orWhere('name_ar', 'like', "%{$search}%");
+                });
+            }
 
-        $departments = $query->get();
+            $departments = $query->get();
+            
+            return [
+                'data' => $departments,
+                'total' => $departments->count(),
+            ];
+        });
         
-        return response()->json([
-            'data' => $departments,
-            'total' => $departments->count(),
-        ]);
+        return response()->json($result);
     }
 
     /**
@@ -38,7 +47,8 @@ class DepartmentController extends Controller
      */
     public function adminIndex(Request $request)
     {
-        $query = Department::query();
+        $query = Department::query()
+            ->select(['id', 'name_en', 'name_ar', 'slug', 'description_en', 'description_ar', 'icon_key', 'is_active', 'sort_order', 'created_at', 'updated_at']);
 
         // Filter by active status
         if ($request->has('is_active')) {
@@ -46,7 +56,7 @@ class DepartmentController extends Controller
         }
 
         // Search
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name_en', 'like', "%{$search}%")
@@ -104,6 +114,10 @@ class DepartmentController extends Controller
             'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
+        // Clear cache
+        Cache::forget('departments:active:' . md5(''));
+        Cache::forget('admin:metrics');
+
         return response()->json([
             'message' => 'Department created successfully',
             'data' => $department,
@@ -146,6 +160,9 @@ class DepartmentController extends Controller
 
         $department->update($validated);
 
+        // Clear cache
+        Cache::forget('departments:active:' . md5(''));
+
         return response()->json([
             'message' => 'Department updated successfully',
             'data' => $department->fresh(),
@@ -167,22 +184,28 @@ class DepartmentController extends Controller
 
         $department->delete();
 
+        // Clear cache
+        Cache::forget('departments:active:' . md5(''));
+        Cache::forget('admin:metrics');
+
         return response()->json([
             'message' => 'Department deleted successfully',
         ]);
     }
 
     /**
-     * Admin: Get department statistics
+     * Admin: Get department statistics (cached)
      */
     public function stats()
     {
-        $stats = [
-            'total' => Department::count(),
-            'active' => Department::active()->count(),
-            'inactive' => Department::where('is_active', false)->count(),
-            'with_tickets' => Department::whereHas('tickets')->count(),
-        ];
+        $stats = Cache::remember('departments:stats', 60, function () {
+            return [
+                'total' => Department::count(),
+                'active' => Department::active()->count(),
+                'inactive' => Department::where('is_active', false)->count(),
+                'with_tickets' => Department::whereHas('tickets')->count(),
+            ];
+        });
 
         return response()->json(['data' => $stats]);
     }

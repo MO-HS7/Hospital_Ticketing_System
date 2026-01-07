@@ -3,6 +3,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
 
+  // Fix for #app-manifest import error
+  experimental: {
+    appManifest: false,
+  },
+
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxtjs/i18n',
@@ -16,12 +21,16 @@ export default defineNuxtConfig({
   },
 
   i18n: {
-    locales: ['en', 'ar'],
+    locales: [
+      { code: 'en', iso: 'en-US', name: 'English', dir: 'ltr' },
+      { code: 'ar', iso: 'ar-SA', name: 'العربية', dir: 'rtl' },
+    ],
     defaultLocale: 'en',
     strategy: 'no_prefix',
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_locale',
+      redirectOn: 'root',
     },
     vueI18n: '~/i18n.config.ts',
   },
@@ -40,12 +49,12 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Hospital Ticketing System',
+      title: 'Masar (مسار)',
       htmlAttrs: { lang: 'en' },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'Hospital Ticketing & Booking System' },
+        { name: 'description', content: 'Masar (مسار) - Smart Hospital Ticketing System' },
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
@@ -59,6 +68,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000/api',
+      paymentsEnabled: process.env.NUXT_PUBLIC_PAYMENTS_ENABLED === 'true',
     },
   },
 })

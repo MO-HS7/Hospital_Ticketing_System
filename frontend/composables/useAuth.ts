@@ -3,7 +3,7 @@ export interface User {
     name: string
     email: string
     phone?: string
-    role: 'admin' | 'patient' | 'doctor' | 'maintenance' | 'reception'
+    role: 'admin' | 'patient' | 'doctor' | 'maintenance' | 'reception' | 'lab_technician' | 'radiologist' | 'pharmacist'
     permissions: string[]
     roles?: Array<{ name: string }>
 }
@@ -46,11 +46,14 @@ export const useAuth = () => {
         doctor: '/staff/doctor/tickets',
         maintenance: '/staff/maintenance/tickets',
         reception: '/staff/reception/tickets',
+        lab_technician: '/staff/lab/orders',
+        radiologist: '/staff/radiology/orders',
+        pharmacist: '/staff/pharmacy/orders',
     }
 
     function extractRole(apiUser: ApiUser): User['role'] {
         const roleName = apiUser.roles?.[0]?.name
-        if (roleName && ['admin', 'patient', 'doctor', 'maintenance', 'reception'].includes(roleName)) {
+        if (roleName && ['admin', 'patient', 'doctor', 'maintenance', 'reception', 'lab_technician', 'radiologist', 'pharmacist'].includes(roleName)) {
             return roleName as User['role']
         }
         return 'patient'

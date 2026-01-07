@@ -25,6 +25,10 @@ class RoleSeeder extends Seeder
             'users.manage',
             'reports.view',
             'audit.view',
+            // Phase 5: Order permissions
+            'orders.create',
+            'orders.view',
+            'orders.process',
         ];
 
         foreach ($permissions as $permission) {
@@ -36,8 +40,8 @@ class RoleSeeder extends Seeder
             ]);
         }
 
-        // Create roles
-        $roles = ['admin', 'patient', 'doctor', 'maintenance', 'reception'];
+        // Create roles (including Phase 5 staff roles)
+        $roles = ['admin', 'patient', 'doctor', 'maintenance', 'reception', 'lab_technician', 'radiologist', 'pharmacist'];
         foreach ($roles as $role) {
             DB::table('roles')->insertOrIgnore([
                 'name' => $role,
@@ -48,12 +52,17 @@ class RoleSeeder extends Seeder
         }
 
         // Role-permission mappings
+        // Note: Ticket visibility is primarily controlled by query logic in TicketController
+        // tickets.view_all is only for admins who need to see ALL tickets
         $rolePermissions = [
-            'admin' => ['tickets.create', 'tickets.view', 'tickets.view_all', 'tickets.update', 'tickets.delete', 'tickets.accept', 'tickets.complete', 'departments.manage', 'users.manage', 'reports.view', 'audit.view'],
-            'patient' => ['tickets.create', 'tickets.view'],
-            'doctor' => ['tickets.view', 'tickets.view_all', 'tickets.accept', 'tickets.complete'],
-            'maintenance' => ['tickets.view', 'tickets.view_all', 'tickets.accept', 'tickets.complete'],
-            'reception' => ['tickets.create', 'tickets.view', 'tickets.view_all'],
+            'admin' => ['tickets.create', 'tickets.view', 'tickets.view_all', 'tickets.update', 'tickets.delete', 'tickets.accept', 'tickets.complete', 'departments.manage', 'users.manage', 'reports.view', 'audit.view', 'orders.view', 'orders.process'],
+            'patient' => ['tickets.create', 'tickets.view', 'orders.view'],
+            'doctor' => ['tickets.create', 'tickets.view', 'tickets.accept', 'tickets.complete', 'orders.create', 'orders.view'],
+            'maintenance' => ['tickets.view', 'tickets.accept', 'tickets.complete'],
+            'reception' => ['tickets.create', 'tickets.view', 'orders.view'],
+            'lab_technician' => ['orders.view', 'orders.process'],
+            'radiologist' => ['orders.view', 'orders.process'],
+            'pharmacist' => ['orders.view', 'orders.process'],
         ];
 
         foreach ($rolePermissions as $roleName => $perms) {

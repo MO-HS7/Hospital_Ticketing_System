@@ -2,10 +2,12 @@
 -- This file is executed when the MySQL container starts for the first time
 
 -- Create additional databases if needed
--- CREATE DATABASE IF NOT EXISTS hospital_ticketing_testing;
+CREATE DATABASE IF NOT EXISTS hospital_ticketing_testing;
 
 -- Grant privileges
 GRANT ALL PRIVILEGES ON hospital_ticketing.* TO 'hospital'@'%';
 GRANT ALL PRIVILEGES ON hospital_ticketing.* TO 'hospital'@'localhost';
+GRANT ALL PRIVILEGES ON hospital_ticketing_testing.* TO 'hospital'@'%';
+GRANT ALL PRIVILEGES ON hospital_ticketing_testing.* TO 'hospital'@'localhost';
 
 FLUSH PRIVILEGES;

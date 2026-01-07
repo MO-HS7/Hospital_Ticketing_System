@@ -43,6 +43,11 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                // Persistent connections: toggle via env (default: false for safety)
+                // Enable with DB_PERSISTENT=true if connection overhead is the bottleneck
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
+                // Emulate prepares for better performance with simple queries
+                PDO::ATTR_EMULATE_PREPARES => true,
             ]) : [],
         ],
 

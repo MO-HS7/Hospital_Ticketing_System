@@ -25,6 +25,12 @@
 - Redis in container
 - Port: 8000 (mapped)
 
+### Backend Cache Store (Decision)
+- Cache store: redis
+- Notes:
+  - The health endpoint is cache-store aware and only requires `cache` / `cache_locks` tables when the cache store is `database`.
+  - The permission system (spatie/laravel-permission) caches permissions using the configured cache store.
+
 ## Docker Services
 
 ```yaml

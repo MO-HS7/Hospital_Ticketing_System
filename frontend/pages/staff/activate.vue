@@ -85,8 +85,7 @@
 
 <script setup lang="ts">
 definePageMeta({ 
-  layout: false,
-  middleware: ['guest']
+  layout: false
 })
 
 const route = useRoute()

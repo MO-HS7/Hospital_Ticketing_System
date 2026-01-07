@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-type TicketStatus = 'pending' | 'in_progress' | 'completed' | 'overdue' | 'closed_late'
+import type { TicketStatus } from '~/composables/useTickets'
 
 interface Props {
   status: TicketStatus
@@ -20,6 +20,8 @@ const props = defineProps<Props>()
 const statusClass = computed(() => {
   switch (props.status) {
     case 'pending': return 'badge-pending'
+    case 'assigned': return 'badge-assigned'
+    case 'awaiting_payment': return 'badge-awaiting-payment'
     case 'in_progress': return 'badge-in-progress'
     case 'completed': return 'badge-completed'
     case 'overdue': return 'badge-overdue'
@@ -31,6 +33,8 @@ const statusClass = computed(() => {
 const dotClass = computed(() => {
   switch (props.status) {
     case 'pending': return 'bg-amber-500'
+    case 'assigned': return 'bg-indigo-500'
+    case 'awaiting_payment': return 'bg-purple-500 animate-pulse'
     case 'in_progress': return 'bg-blue-500 animate-pulse'
     case 'completed': return 'bg-green-500'
     case 'overdue': return 'bg-red-500 animate-pulse'

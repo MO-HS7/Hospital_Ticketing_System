@@ -10,7 +10,9 @@ class Ticket extends Model
     use HasFactory;
 
     protected $fillable = [
+        'encounter_id',
         'patient_id',
+        'creator_id',
         'department_id',
         'assigned_to',
         'type',
@@ -21,19 +23,39 @@ class Ticket extends Model
         'scheduled_at',
         'deadline',
         'accepted_at',
+        'started_at',
         'completed_at',
+        'time_spent_minutes',
+        // Patient Info (Step 3 enhancement)
+        'patient_age',
+        'patient_gender',
+        'contact_method',
+        'contact_phone',
+        'is_emergency',
+        'medical_conditions',
+        'additional_notes',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
         'deadline' => 'datetime',
         'accepted_at' => 'datetime',
+        'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'time_spent_minutes' => 'integer',
+        'is_emergency' => 'boolean',
+        'patient_age' => 'integer',
     ];
+
 
     public function patient()
     {
         return $this->belongsTo(User::class, 'patient_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'creator_id');
     }
 
     public function department()
@@ -44,6 +66,21 @@ class Ticket extends Model
     public function assignee()
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function encounter()
+    {
+        return $this->belongsTo(Encounter::class);
+    }
+
+    public function notes()
+    {
+        return $this->hasMany(TicketNote::class);
+    }
+
+    public function events()
+    {
+        return $this->hasMany(TicketEvent::class);
     }
 
     public function isOverdue(): bool

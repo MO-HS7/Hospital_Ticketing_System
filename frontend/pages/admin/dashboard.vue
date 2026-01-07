@@ -76,9 +76,9 @@
         <div class="card p-6">
           <h3 class="font-semibold mb-4">{{ $t('dashboard.staffCount') }}</h3>
           <div class="grid grid-cols-3 gap-4 text-center">
-            <div><p class="text-3xl font-bold text-cyan-600">12</p><p class="text-sm text-[var(--color-text-muted)]">{{ $t('staffTypes.doctor') }}</p></div>
-            <div><p class="text-3xl font-bold text-amber-600">5</p><p class="text-sm text-[var(--color-text-muted)]">{{ $t('staffTypes.maintenance') }}</p></div>
-            <div><p class="text-3xl font-bold text-rose-600">4</p><p class="text-sm text-[var(--color-text-muted)]">{{ $t('staffTypes.reception') }}</p></div>
+            <div><p class="text-3xl font-bold text-cyan-600">{{ staffCounts.doctors }}</p><p class="text-sm text-[var(--color-text-muted)]">{{ $t('staffTypes.doctor') }}</p></div>
+            <div><p class="text-3xl font-bold text-amber-600">{{ staffCounts.maintenance }}</p><p class="text-sm text-[var(--color-text-muted)]">{{ $t('staffTypes.maintenance') }}</p></div>
+            <div><p class="text-3xl font-bold text-rose-600">{{ staffCounts.reception }}</p><p class="text-sm text-[var(--color-text-muted)]">{{ $t('staffTypes.reception') }}</p></div>
           </div>
         </div>
       </div>
@@ -132,6 +132,7 @@ const { departments, fetchDepartments, getName } = useDepartments()
 const metrics = ref({ total: 0, pending: 0, overdue: 0, completed: 0 })
 const deptStats = ref<Array<{ id: string; name: string; count: number }>>([])
 const overdueTickets = ref<Array<{ id: string; department: { name_en: string; name_ar: string }; type: string; deadline: string; status: string }>>([])
+const staffCounts = ref({ doctors: 0, maintenance: 0, reception: 0 })
 const loading = ref(true)
 
 const getDeptName = (dept: { name_en: string; name_ar: string }) => locale.value === 'ar' ? dept.name_ar : dept.name_en
@@ -142,10 +143,15 @@ const fetchMetrics = async () => {
       headers: { Authorization: `Bearer ${token.value}` },
     })
     metrics.value = res.tickets || { total: 0, pending: 0, overdue: 0, completed: 0 }
+    staffCounts.value = res.staff || { doctors: 0, maintenance: 0, reception: 0 }
     
     // Build department stats from API response or departments list
     if (res.departments_stats) {
-      deptStats.value = res.departments_stats
+      deptStats.value = res.departments_stats.map((d: any) => ({
+        id: d.id,
+        name: locale.value === 'ar' ? d.name_ar : d.name_en,
+        count: d.count,
+      }))
     } else {
       // Use fetched departments with placeholder counts
       deptStats.value = departments.value.slice(0, 6).map(d => ({

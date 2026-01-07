@@ -22,6 +22,10 @@ class User extends Authenticatable
         'email',
         'phone',
         'password',
+        'activation_token',
+        'is_active',
+        'department_id',
+        'email_verified_at',
     ];
 
     /**
@@ -43,4 +47,14 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function encounters()
+    {
+        return $this->hasMany(Encounter::class, 'patient_id');
+    }
 }
