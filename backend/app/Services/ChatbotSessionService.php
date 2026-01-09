@@ -1077,6 +1077,7 @@ PROMPT;
             'type' => 'appointment',
             'status' => $status,
             'priority' => $priority,
+            'source' => 'chatbot', // CRITICAL: Mark as chatbot-created ticket
             'subject' => ($session->locale === 'ar' ? 'حجز عبر المساعد الآلي: ' : 'Chatbot Booking: ') . Str::limit($session->getState('symptoms', 'Appointment'), 50),
             'description' => $session->getState('symptoms'),
             'scheduled_at' => $session->getState('scheduled_at'),

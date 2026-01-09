@@ -47,6 +47,10 @@ export default defineNuxtConfig({
     configPath: 'tailwind.config.ts',
   },
 
+  css: [
+    '@fortawesome/fontawesome-svg-core/styles.css',
+  ],
+
   app: {
     head: {
       title: 'Masar (مسار)',

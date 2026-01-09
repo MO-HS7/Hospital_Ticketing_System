@@ -18,6 +18,7 @@ class Ticket extends Model
         'type',
         'status',
         'priority',
+        'source', // 'manual' or 'chatbot'
         'subject',
         'description',
         'scheduled_at',

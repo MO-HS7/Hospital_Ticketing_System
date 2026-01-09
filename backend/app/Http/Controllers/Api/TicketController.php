@@ -286,6 +286,7 @@ class TicketController extends Controller
             'description' => $request->description,
             'scheduled_at' => $request->scheduled_at,
             'priority' => $request->priority ?? 'medium',
+            'source' => 'manual', // CRITICAL: All tickets created via API/UI are manual
             'status' => $ticketStatus,
             'accepted_at' => $acceptedAt,
             'deadline' => $request->scheduled_at ? 
