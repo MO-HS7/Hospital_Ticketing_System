@@ -206,7 +206,18 @@
         "scheduledAt": "Scheduled At",
         "notProvided": "Not provided",
         "unknownPatient": "Unknown Patient",
-        "notAssigned": "Not assigned"
+        "notAssigned": "Not assigned",
+        "ticketDetails": "Ticket Details",
+        "timeline": "Timeline & Notes",
+        "noNotes": "No notes yet",
+        "details": "Details",
+        "timestamps": "Timestamps",
+        "assignedTo": "Assigned To",
+        "unassigned": "Unassigned",
+        "deadline": "Deadline",
+        "acceptedAt": "Accepted At",
+        "completedAt": "Completed At",
+        "noDescription": "No description provided"
     },
     "ticketStatus": {
         "pending": "Pending",
@@ -388,7 +399,32 @@
         "degraded": "Degraded",
         "unhealthy": "Unhealthy",
         "needsAttention": "Needs Attention",
-        "allSystemsOk": "All Systems OK"
+        "allSystemsOk": "All Systems OK",
+        "topDepartments": "Top",
+        "allDepartments": "All",
+        "showAll": "Show all",
+        "collapse": "Collapse"
+    },
+    "adminTickets": {
+        "allTickets": "All Tickets",
+        "subtitle": "Manage and monitor all system tickets",
+        "activeFilters": "Active filters",
+        "clearAll": "Clear all",
+        "resetFilters": "Reset",
+        "searchPlaceholder": "Search ID, subject, patient...",
+        "allDepartments": "All Departments",
+        "allStatuses": "All Statuses",
+        "allPriorities": "All Priorities",
+        "allSources": "All Sources",
+        "allSLA": "All SLA",
+        "noTickets": "No tickets found",
+        "noTicketsDesc": "Try adjusting your filters or search query.",
+        "slaAtRisk": "SLA At Risk",
+        "slaBreached": "SLA Breached",
+        "urgentTickets": "Urgent Tickets",
+        "atRisk": "At Risk",
+        "breached": "Breached",
+        "loadError": "Failed to load ticket"
     },
     "filters": {
         "all": "All",

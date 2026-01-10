@@ -31,14 +31,15 @@ class AdminController extends Controller
                 ")
                 ->first();
 
-            // Department stats with single query
+            // Department stats with single query - includes slug for icon mapping
             $departmentsStats = DB::table('tickets')
                 ->join('departments', 'tickets.department_id', '=', 'departments.id')
-                ->selectRaw('departments.id, departments.name_en, departments.name_ar, COUNT(*) as count')
-                ->groupBy('departments.id', 'departments.name_en', 'departments.name_ar')
+                ->selectRaw('departments.id, departments.slug, departments.name_en, departments.name_ar, COUNT(*) as count')
+                ->groupBy('departments.id', 'departments.slug', 'departments.name_en', 'departments.name_ar')
                 ->get()
                 ->map(fn($row) => [
                     'id' => $row->id,
+                    'slug' => $row->slug,
                     'name_en' => $row->name_en,
                     'name_ar' => $row->name_ar,
                     'count' => (int) $row->count,

@@ -86,14 +86,6 @@
     "table": {
         "id": "الرقم"
     },
-    "dashboard": {
-        "tickets": "تذاكر",
-        "totalTickets": "إجمالي التذاكر",
-        "completed": "مكتمل",
-        "pending": "قيد الانتظار",
-        "inProgressTickets": "قيد التنفيذ",
-        "overdueTickets": "متأخر"
-    },
     "roles": {
         "title": "اختر دورك",
         "subtitle": "اختر طريقة الوصول للنظام",
@@ -202,7 +194,17 @@
         "selectTimeSlot": "اختر الموعد",
         "noSlotsAvailable": "لا توجد مواعيد متاحة لهذا التاريخ",
         "invalidDate": "يرجى اختيار تاريخ صالح (اليوم إلى 60 يومًا قادمًا)",
-        "workingHours": "ساعات العمل"
+        "workingHours": "ساعات العمل",
+        "ticketDetails": "تفاصيل التذكرة",
+        "details": "التفاصيل",
+        "timestamps": "التوقيتات",
+        "assignedTo": "مُعين إلى",
+        "unassigned": "غير مُعين",
+        "deadline": "الموعد النهائي",
+        "acceptedAt": "تم القبول في",
+        "completedAt": "تم الإكمال في",
+        "noDescription": "لا يوجد وصف",
+        "unknownPatient": "مريض غير معروف"
     },
     "ticketStatus": {
         "pending": "في الانتظار",
@@ -362,8 +364,6 @@
         "noData": "لا توجد بيانات",
         "slaStatus": "حالة SLA",
         "onTrack": "في الموعد",
-        "slaWarningShort": "تحذير",
-        "slaCritical": "حرج",
         "dailyOperations": "العمليات اليومية",
         "completedTotal": "مكتملة",
         "stillOpen": "لا تزال مفتوحة",
@@ -374,10 +374,33 @@
         "mediumPressure": "حمل متوسط",
         "highPressure": "ضغط عالي",
         "allClear": "كل شيء على ما يرام",
-        "degraded": "متدهور",
-        "unhealthy": "غير صحي",
         "needsAttention": "يحتاج انتباه",
-        "allSystemsOk": "جميع الأنظمة تعمل"
+        "allSystemsOk": "جميع الأنظمة تعمل",
+        "topDepartments": "الأعلى",
+        "allDepartments": "الكل",
+        "showAll": "عرض الكل",
+        "collapse": "طي"
+    },
+    "adminTickets": {
+        "allTickets": "جميع التذاكر",
+        "subtitle": "إدارة ومراقبة جميع تذاكر النظام",
+        "activeFilters": "الفلاتر النشطة",
+        "clearAll": "مسح الكل",
+        "resetFilters": "إعادة تعيين",
+        "searchPlaceholder": "بحث: الرقم، الموضوع، المريض...",
+        "allDepartments": "جميع الأقسام",
+        "allStatuses": "جميع الحالات",
+        "allPriorities": "جميع الأولويات",
+        "allSources": "جميع المصادر",
+        "allSLA": "جميع SLA",
+        "noTickets": "لا توجد تذاكر",
+        "noTicketsDesc": "جرب تعديل الفلاتر أو البحث.",
+        "slaAtRisk": "SLA معرضة للخطر",
+        "slaBreached": "SLA متجاوزة",
+        "urgentTickets": "تذاكر عاجلة",
+        "atRisk": "معرضة للخطر",
+        "breached": "متجاوزة",
+        "loadError": "فشل في تحميل التذكرة"
     },
     "filters": {
         "all": "الكل",

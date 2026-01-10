@@ -252,12 +252,10 @@
                 <div class="w-full h-full flex flex-col items-center justify-center text-center">
                   <Transition name="fade" mode="out-in">
                     <div v-if="hoveredDept" :key="hoveredDept" class="animate-fade-in">
-                      <p class="text-2xl font-bold text-[var(--color-text-primary)]">{{ getHoveredDeptData.count }}</p>
+                      <Icon :name="getDeptIcon(getHoveredDeptData?.slug)" size="lg" class="text-[var(--color-text-muted)] mb-1" />
+                      <p class="text-2xl font-bold text-[var(--color-text-primary)]">{{ getHoveredDeptData?.count || 0 }}</p>
                       <p class="text-xs text-[var(--color-text-muted)] truncate max-w-[100px]">
-                        {{ locale === 'ar' ? getHoveredDeptData.name_ar : getHoveredDeptData.name_en }}
-                      </p>
-                      <p class="text-[10px] mt-1" :class="getPressureTextClass(getHoveredDeptData.pressure)">
-                        {{ $t(`commandCenter.${getHoveredDeptData.pressure}Pressure`) }}
+                        {{ locale === 'ar' ? getHoveredDeptData?.name_ar : getHoveredDeptData?.name_en }}
                       </p>
                     </div>
                     <div v-else key="default">
@@ -269,49 +267,81 @@
               </foreignObject>
             </svg>
             
-            <!-- Hover tooltip -->
+            <!-- Hover tooltip - Icon + Name + Count only -->
             <Transition name="fade">
               <div 
                 v-if="hoveredDept && getHoveredDeptData" 
-                class="absolute top-0 end-0 p-3 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] shadow-lg text-sm z-10"
+                class="absolute top-0 end-0 p-4 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] shadow-lg z-10 text-center min-w-[120px]"
               >
-                <p class="font-semibold text-[var(--color-text-primary)] mb-2">
-                  {{ locale === 'ar' ? getHoveredDeptData.name_ar : getHoveredDeptData.name_en }}
+                <Icon 
+                  :name="getDeptIcon(getHoveredDeptData?.slug)" 
+                  size="xl" 
+                  class="text-[var(--color-text-muted)] mb-2" 
+                />
+                <p class="font-semibold text-[var(--color-text-primary)] mb-1">
+                  {{ locale === 'ar' ? getHoveredDeptData?.name_ar : getHoveredDeptData?.name_en }}
                 </p>
-                <div class="space-y-1 text-xs">
-                  <div class="flex justify-between gap-4">
-                    <span class="text-[var(--color-text-muted)]">{{ $t('dashboard.totalTickets') }}:</span>
-                    <span class="font-bold">{{ getHoveredDeptData.count }}</span>
-                  </div>
-                  <div class="flex justify-between gap-4">
-                    <span class="text-[var(--color-text-muted)]">{{ $t('commandCenter.stillOpen') }}:</span>
-                    <span class="font-bold text-amber-600">{{ getHoveredDeptData.open || 0 }}</span>
-                  </div>
-                  <div class="flex justify-between gap-4">
-                    <span class="text-[var(--color-text-muted)]">{{ $t('dashboard.overdueTickets') }}:</span>
-                    <span class="font-bold text-red-600">{{ getHoveredDeptData.overdue || 0 }}</span>
-                  </div>
-                </div>
+                <p class="text-lg font-bold text-[var(--color-text-primary)]">
+                  {{ getHoveredDeptData?.count || 0 }} {{ $t('nav.tickets') }}
+                </p>
                 <p class="mt-2 text-[10px] text-primary-600">{{ $t('commandCenter.clickToView') }} →</p>
               </div>
             </Transition>
           </div>
           
-          <!-- Legend -->
-          <div class="flex flex-wrap justify-center gap-3 mt-4">
-            <div 
-              v-for="(dept, idx) in radialDepartments.slice(0, 5)" 
-              :key="`legend-${dept.id}`"
-              class="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs cursor-pointer transition-all"
-              :class="hoveredDept === dept.id ? 'bg-[var(--color-bg-tertiary)] scale-105' : 'hover:bg-[var(--color-bg-tertiary)]'"
-              @mouseenter="hoveredDept = dept.id"
-              @mouseleave="hoveredDept = null"
-              @click="navigateToDeptTickets(dept.id)"
-            >
-              <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: getDeptColor(idx, dept.pressure) }"></span>
-              <span class="text-[var(--color-text-secondary)] truncate max-w-[80px]">
-                {{ locale === 'ar' ? dept.name_ar : dept.name_en }}
-              </span>
+          <!-- Legend - Progressive Disclosure for 30+ Departments -->
+          <div class="mt-4">
+            <!-- Top/All Toggle -->
+            <div class="flex items-center justify-center gap-1 mb-3">
+              <button 
+                @click="legendMode = 'top'; legendExpanded = false"
+                class="px-3 py-1 rounded-full text-[10px] font-medium transition-all"
+                :class="legendMode === 'top' 
+                  ? 'bg-primary-600 text-white' 
+                  : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-tertiary)]/80'"
+              >
+                {{ $t('commandCenter.topDepartments') }}
+              </button>
+              <button 
+                @click="legendMode = 'all'; legendExpanded = true"
+                class="px-3 py-1 rounded-full text-[10px] font-medium transition-all"
+                :class="legendMode === 'all' 
+                  ? 'bg-primary-600 text-white' 
+                  : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-tertiary)]/80'"
+              >
+                {{ $t('commandCenter.allDepartments') }}
+              </button>
+            </div>
+            
+            <!-- Legend Items -->
+            <div class="flex flex-wrap justify-center gap-2">
+              <div 
+                v-for="dept in visibleLegendDepts" 
+                :key="`legend-${dept.id}`"
+                class="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs cursor-pointer transition-all"
+                :class="hoveredDept === dept.id ? 'bg-[var(--color-bg-tertiary)] scale-105' : 'hover:bg-[var(--color-bg-tertiary)]'"
+                @mouseenter="hoveredDept = dept.id"
+                @mouseleave="hoveredDept = null"
+                @click="navigateToDeptTickets(dept.id)"
+              >
+                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: getDeptColor(radialDepartments.findIndex((d: any) => d.id === dept.id), dept.pressure) }"></span>
+                <Icon :name="getDeptIcon(dept.slug)" size="xs" class="text-[var(--color-text-muted)] flex-shrink-0" />
+                <span class="text-[var(--color-text-secondary)] truncate max-w-[80px]">
+                  {{ locale === 'ar' ? dept.name_ar : dept.name_en }}
+                </span>
+                <span class="text-[var(--color-text-muted)] font-medium flex-shrink-0">({{ dept.count }})</span>
+              </div>
+            </div>
+            
+            <!-- Expand/Collapse Control (only in "Top" mode with hidden departments) -->
+            <div v-if="legendMode === 'top' && hiddenDeptCount > 0" class="flex justify-center mt-2">
+              <button 
+                @click="legendExpanded = !legendExpanded"
+                class="px-3 py-1 rounded-full text-[10px] font-medium text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all flex items-center gap-1"
+              >
+                <Icon :name="legendExpanded ? 'chevron-up' : 'chevron-down'" size="xs" />
+                {{ legendExpanded ? $t('commandCenter.collapse') : `${$t('commandCenter.showAll')} (+${hiddenDeptCount})` }}
+              </button>
             </div>
           </div>
           
@@ -329,140 +359,182 @@
             {{ $t('commandCenter.dailyOperations') }}
           </h3>
           
-          <!-- Visual Stacked Status Bar -->
-          <div class="mb-6">
-            <div class="flex items-center justify-between mb-2">
+          <!-- Pipeline Flow Track - Ticket Lifecycle Stages -->
+          <div class="space-y-4">
+            <!-- Total Counter -->
+            <div class="flex items-center justify-between">
               <span class="text-xs text-[var(--color-text-muted)]">{{ $t('commandCenter.statusDistribution') }}</span>
               <span class="text-xs font-medium text-[var(--color-text-secondary)]">{{ metrics.tickets?.total || 0 }} {{ $t('dashboard.totalTickets') }}</span>
             </div>
-            <div class="h-8 bg-[var(--color-bg-tertiary)] rounded-xl overflow-hidden flex">
-              <!-- Completed -->
+            
+            <!-- Pipeline Flow -->
+            <div class="flex items-end gap-2">
+              <!-- Pending Stage -->
               <div 
-                class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 flex items-center justify-center transition-all duration-300 relative group cursor-pointer hover:brightness-110"
-                :style="{ width: `${completedPercent}%` }"
-                @click="navigateToTickets('completed')"
-              >
-                <span v-if="completedPercent > 10" class="text-[10px] font-bold text-white">{{ metrics.tickets?.completed || 0 }}</span>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-emerald-600 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                  {{ $t('dashboard.completed') }}: {{ metrics.tickets?.completed || 0 }} ({{ completedPercent }}%) · {{ $t('commandCenter.clickToView') }}
-                </div>
-              </div>
-              <!-- In Progress -->
-              <div 
-                class="h-full bg-gradient-to-r from-blue-400 to-blue-500 flex items-center justify-center transition-all duration-300 relative group cursor-pointer hover:brightness-110"
-                :style="{ width: `${inProgressPercent}%` }"
-                @click="navigateToTickets('in_progress')"
-              >
-                <span v-if="inProgressPercent > 10" class="text-[10px] font-bold text-white">{{ metrics.tickets?.in_progress || 0 }}</span>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-blue-600 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                  {{ $t('dashboard.inProgressTickets') }}: {{ metrics.tickets?.in_progress || 0 }} ({{ inProgressPercent }}%) · {{ $t('commandCenter.clickToView') }}
-                </div>
-              </div>
-              <!-- Pending -->
-              <div 
-                class="h-full bg-gradient-to-r from-amber-400 to-amber-500 flex items-center justify-center transition-all duration-300 relative group cursor-pointer hover:brightness-110"
-                :style="{ width: `${pendingPercent}%` }"
+                class="flex-1 group cursor-pointer"
                 @click="navigateToTickets('pending')"
               >
-                <span v-if="pendingPercent > 10" class="text-[10px] font-bold text-white">{{ metrics.tickets?.pending || 0 }}</span>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-amber-600 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                  {{ $t('dashboard.pending') }}: {{ metrics.tickets?.pending || 0 }} ({{ pendingPercent }}%) · {{ $t('commandCenter.clickToView') }}
+                <div 
+                  class="relative rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-amber-500/20"
+                  :style="{ minHeight: `${Math.max(60, pendingPercent * 1.2)}px` }"
+                >
+                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
+                    <Icon name="clock" size="md" class="mb-1 opacity-90" />
+                    <span class="text-xl font-bold">{{ metrics.tickets?.pending || 0 }}</span>
+                    <span class="text-[10px] font-medium opacity-80">{{ $t('dashboard.pending') }}</span>
+                  </div>
+                  <!-- Tooltip -->
+                  <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-amber-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
+                    {{ pendingPercent }}% · {{ $t('commandCenter.clickToView') }}
+                  </div>
+                </div>
+                <!-- Connector Arrow -->
+                <div class="flex justify-center mt-1">
+                  <Icon name="arrow-down" size="xs" class="text-amber-400/50" />
                 </div>
               </div>
-              <!-- Overdue -->
+              
+              <!-- In Progress Stage -->
               <div 
-                class="h-full bg-gradient-to-r from-red-400 to-red-500 flex items-center justify-center transition-all duration-300 relative group cursor-pointer hover:brightness-110"
-                :style="{ width: `${overduePercent}%` }"
+                class="flex-1 group cursor-pointer"
+                @click="navigateToTickets('in_progress')"
+              >
+                <div 
+                  class="relative rounded-xl bg-gradient-to-b from-blue-400 to-blue-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/20"
+                  :style="{ minHeight: `${Math.max(60, inProgressPercent * 1.2)}px` }"
+                >
+                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
+                    <Icon name="spinner" size="md" class="mb-1 opacity-90 animate-spin" />
+                    <span class="text-xl font-bold">{{ metrics.tickets?.in_progress || 0 }}</span>
+                    <span class="text-[10px] font-medium opacity-80">{{ $t('dashboard.inProgressTickets') }}</span>
+                  </div>
+                  <!-- Tooltip -->
+                  <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-blue-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
+                    {{ inProgressPercent }}% · {{ $t('commandCenter.clickToView') }}
+                  </div>
+                </div>
+                <!-- Connector Arrow -->
+                <div class="flex justify-center mt-1">
+                  <Icon name="arrow-down" size="xs" class="text-blue-400/50" />
+                </div>
+              </div>
+              
+              <!-- Completed Stage -->
+              <div 
+                class="flex-1 group cursor-pointer"
+                @click="navigateToTickets('completed')"
+              >
+                <div 
+                  class="relative rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-emerald-500/20"
+                  :style="{ minHeight: `${Math.max(60, completedPercent * 1.2)}px` }"
+                >
+                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
+                    <Icon name="check-circle" size="md" class="mb-1 opacity-90" />
+                    <span class="text-xl font-bold">{{ metrics.tickets?.completed || 0 }}</span>
+                    <span class="text-[10px] font-medium opacity-80">{{ $t('dashboard.completed') }}</span>
+                  </div>
+                  <!-- Tooltip -->
+                  <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-emerald-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
+                    {{ completedPercent }}% · {{ $t('commandCenter.clickToView') }}
+                  </div>
+                </div>
+                <!-- Success indicator -->
+                <div class="flex justify-center mt-1">
+                  <Icon name="check" size="xs" class="text-emerald-400/50" />
+                </div>
+              </div>
+              
+              <!-- Overdue Stage (Alert) -->
+              <div 
+                class="flex-1 group cursor-pointer"
                 @click="navigateToTickets('overdue')"
               >
-                <span v-if="overduePercent > 10" class="text-[10px] font-bold text-white">{{ metrics.tickets?.overdue || 0 }}</span>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-red-600 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                  {{ $t('dashboard.overdueTickets') }}: {{ metrics.tickets?.overdue || 0 }} ({{ overduePercent }}%) · {{ $t('commandCenter.clickToView') }}
+                <div 
+                  class="relative rounded-xl bg-gradient-to-b from-red-400 to-red-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-red-500/20"
+                  :class="{ 'animate-pulse': (metrics.tickets?.overdue || 0) > 0 }"
+                  :style="{ minHeight: `${Math.max(60, overduePercent * 1.2)}px` }"
+                >
+                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
+                    <Icon name="exclamation-triangle" size="md" class="mb-1 opacity-90" />
+                    <span class="text-xl font-bold">{{ metrics.tickets?.overdue || 0 }}</span>
+                    <span class="text-[10px] font-medium opacity-80">{{ $t('dashboard.overdueTickets') }}</span>
+                  </div>
+                  <!-- Tooltip -->
+                  <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-red-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
+                    {{ overduePercent }}% · {{ $t('commandCenter.clickToView') }}
+                  </div>
                 </div>
-              </div>
-            </div>
-            <!-- Legend -->
-            <div class="flex flex-wrap justify-center gap-4 mt-3 text-xs">
-              <div class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded bg-emerald-500"></span>
-                <span class="text-[var(--color-text-muted)]">{{ $t('dashboard.completed') }}</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded bg-blue-500"></span>
-                <span class="text-[var(--color-text-muted)]">{{ $t('dashboard.inProgressTickets') }}</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded bg-amber-500"></span>
-                <span class="text-[var(--color-text-muted)]">{{ $t('dashboard.pending') }}</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded bg-red-500"></span>
-                <span class="text-[var(--color-text-muted)]">{{ $t('dashboard.overdueTickets') }}</span>
+                <!-- Warning indicator -->
+                <div class="flex justify-center mt-1">
+                  <Icon name="exclamation" size="xs" :class="(metrics.tickets?.overdue || 0) > 0 ? 'text-red-500' : 'text-red-400/50'" />
+                </div>
               </div>
             </div>
           </div>
           
-          <!-- Ticket Sources - Interactive Segmented Bar -->
+          <!-- Ticket Sources - Split Intelligence Panel -->
           <div class="pt-4 border-t border-[var(--color-border)]">
-            <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center justify-between mb-4">
               <p class="text-sm font-medium text-[var(--color-text-secondary)]">{{ $t('commandCenter.ticketSources') }}</p>
               <span class="text-xs text-[var(--color-text-muted)]">{{ sourceTotal }} {{ $t('dashboard.totalTickets') }}</span>
             </div>
             
-            <!-- Visual ratio bar with click interaction -->
-            <div class="relative h-8 bg-[var(--color-bg-tertiary)] rounded-xl overflow-hidden flex shadow-inner">
-              <!-- Manual Segment - CLICKABLE -->
+            <!-- Split Panels - Width Proportional to Data -->
+            <div class="flex gap-3 min-h-[120px]">
+              <!-- Manual Panel -->
               <div 
-                class="h-full bg-gradient-to-r from-sky-400 to-sky-500 flex items-center justify-center transition-all duration-500 relative group cursor-pointer hover:brightness-110"
-                :style="{ width: `${manualPercent}%`, minWidth: manualPercent > 0 ? '40px' : '0' }"
+                class="group relative rounded-2xl bg-gradient-to-br from-sky-400 to-sky-600 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-sky-500/30 overflow-hidden"
+                :style="{ flex: `${Math.max(manualPercent, 20)} 1 0` }"
                 @click="navigateToTickets('source=manual')"
               >
-                <div class="flex items-center gap-1">
-                  <Icon name="user" size="xs" class="text-white" />
-                  <span v-if="manualPercent > 15" class="text-[10px] font-bold text-white">{{ insights.source_breakdown?.manual || 0 }}</span>
+                <!-- Decorative Background Pattern -->
+                <div class="absolute inset-0 opacity-10">
+                  <div class="absolute top-4 end-4 w-24 h-24 border-4 border-white rounded-full"></div>
+                  <div class="absolute bottom-2 start-2 w-16 h-16 border-4 border-white rounded-full"></div>
                 </div>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-sky-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none shadow-lg">
-                  <div class="font-semibold">{{ $t('commandCenter.manual') }}</div>
-                  <div>{{ insights.source_breakdown?.manual || 0 }} {{ $t('nav.tickets') }} ({{ manualPercent }}%)</div>
-                  <div class="text-sky-200 mt-0.5">{{ $t('commandCenter.clickToView') }}</div>
+                
+                <!-- Content -->
+                <div class="relative h-full flex flex-col items-center justify-center p-4 text-white">
+                  <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <Icon name="user" size="lg" />
+                  </div>
+                  <span class="text-3xl font-bold">{{ insights.source_breakdown?.manual || 0 }}</span>
+                  <span class="text-sm font-medium opacity-90">{{ $t('commandCenter.manual') }}</span>
+                  <span class="text-[10px] mt-1 px-2 py-0.5 rounded-full bg-white/20">{{ manualPercent }}%</span>
+                </div>
+                
+                <!-- Hover Tooltip -->
+                <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-sky-700 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
+                  {{ $t('commandCenter.clickToView') }}
                 </div>
               </div>
               
-              <!-- Chatbot Segment - CLICKABLE -->
+              <!-- Chatbot Panel -->
               <div 
-                class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 flex items-center justify-center transition-all duration-500 relative group cursor-pointer hover:brightness-110"
-                :style="{ width: `${chatbotPercent}%`, minWidth: chatbotPercent > 0 ? '40px' : '0' }"
+                class="group relative rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/30 overflow-hidden"
+                :style="{ flex: `${Math.max(chatbotPercent, 20)} 1 0` }"
                 @click="navigateToTickets('source=chatbot')"
               >
-                <div class="flex items-center gap-1">
-                  <Icon name="robot" size="xs" class="text-white" />
-                  <span v-if="chatbotPercent > 15" class="text-[10px] font-bold text-white">{{ insights.source_breakdown?.chatbot || 0 }}</span>
+                <!-- Decorative Background Pattern -->
+                <div class="absolute inset-0 opacity-10">
+                  <div class="absolute top-4 start-4 w-20 h-20 border-4 border-white rounded-xl rotate-12"></div>
+                  <div class="absolute bottom-4 end-4 w-12 h-12 border-4 border-white rounded-xl -rotate-12"></div>
                 </div>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-emerald-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none shadow-lg">
-                  <div class="font-semibold">{{ $t('commandCenter.chatbot') }}</div>
-                  <div>{{ insights.source_breakdown?.chatbot || 0 }} {{ $t('nav.tickets') }} ({{ chatbotPercent }}%)</div>
-                  <div class="text-emerald-200 mt-0.5">{{ $t('commandCenter.clickToView') }}</div>
+                
+                <!-- Content -->
+                <div class="relative h-full flex flex-col items-center justify-center p-4 text-white">
+                  <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <Icon name="robot" size="lg" />
+                  </div>
+                  <span class="text-3xl font-bold">{{ insights.source_breakdown?.chatbot || 0 }}</span>
+                  <span class="text-sm font-medium opacity-90">{{ $t('commandCenter.chatbot') }}</span>
+                  <span class="text-[10px] mt-1 px-2 py-0.5 rounded-full bg-white/20">{{ chatbotPercent }}%</span>
                 </div>
-              </div>
-            </div>
-            
-            <!-- Source Legend -->
-            <div class="flex justify-center gap-6 mt-3">
-              <div 
-                class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                @click="navigateToTickets('source=manual')"
-              >
-                <span class="w-3 h-3 rounded bg-gradient-to-r from-sky-400 to-sky-500"></span>
-                <span class="text-xs text-[var(--color-text-muted)]">{{ $t('commandCenter.manual') }}</span>
-                <span class="text-xs font-medium text-sky-600">{{ insights.source_breakdown?.manual || 0 }}</span>
-              </div>
-              <div 
-                class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                @click="navigateToTickets('source=chatbot')"
-              >
-                <span class="w-3 h-3 rounded bg-gradient-to-r from-emerald-400 to-emerald-500"></span>
-                <span class="text-xs text-[var(--color-text-muted)]">{{ $t('commandCenter.chatbot') }}</span>
-                <span class="text-xs font-medium text-emerald-600">{{ insights.source_breakdown?.chatbot || 0 }}</span>
+                
+                <!-- Hover Tooltip -->
+                <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-emerald-700 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
+                  {{ $t('commandCenter.clickToView') }}
+                </div>
               </div>
             </div>
           </div>
@@ -761,13 +833,6 @@ const slaOnTrack = computed(() => {
   return Math.max(0, pending + inProgress - atRisk)
 })
 
-// Open tickets = pending + in_progress
-const openTickets = computed(() => {
-  const pending = metrics.value.tickets?.pending || 0
-  const inProgress = metrics.value.tickets?.in_progress || 0
-  return pending + inProgress
-})
-
 // SLA Percentage calculations for segmented bar
 const totalSlaTickets = computed(() => slaOnTrack.value + slaWarning.value + slaCritical.value || 1)
 const slaOnTrackPercent = computed(() => Math.round((slaOnTrack.value / totalSlaTickets.value) * 100))
@@ -780,46 +845,6 @@ const hasUrgentItems = computed(() => {
 })
 
 // Severity styling helpers
-const getSeverityClass = (severity: string | undefined) => {
-  switch (severity) {
-    case 'critical': return 'border-red-500 bg-red-50 dark:bg-red-900/20'
-    case 'warning': return 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-    case 'info': return 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-    case 'success': return 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-    default: return 'border-transparent bg-[var(--color-bg-tertiary)]/50'
-  }
-}
-
-const getSeverityBgClass = (severity: string | undefined) => {
-  switch (severity) {
-    case 'critical': return 'bg-gradient-to-br from-red-400 to-red-600'
-    case 'warning': return 'bg-gradient-to-br from-amber-400 to-amber-600'
-    case 'info': return 'bg-gradient-to-br from-blue-400 to-blue-600'
-    case 'success': return 'bg-gradient-to-br from-emerald-400 to-emerald-600'
-    default: return 'bg-gradient-to-br from-gray-400 to-gray-600'
-  }
-}
-
-const getSeverityTextClass = (severity: string | undefined) => {
-  switch (severity) {
-    case 'critical': return 'text-red-600'
-    case 'warning': return 'text-amber-600'
-    case 'info': return 'text-blue-600'
-    case 'success': return 'text-emerald-600'
-    default: return 'text-gray-600'
-  }
-}
-
-const getSeverityBadgeClass = (severity: string | undefined) => {
-  switch (severity) {
-    case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
-    case 'warning': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300'
-    case 'info': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
-    case 'success': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
-    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300'
-  }
-}
-
 const currentDate = computed(() => 
   new Date().toLocaleDateString(locale.value === 'ar' ? 'ar-SA' : 'en-US', { 
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
@@ -837,34 +862,6 @@ const systemHealth = ref<any>({
   queue: { status: 'healthy' },
   storage: { status: 'healthy' }
 })
-
-// System Health helper functions
-const getHealthBgClass = (status: string | undefined) => {
-  switch (status) {
-    case 'healthy': return 'bg-emerald-500'
-    case 'degraded': return 'bg-amber-500'
-    case 'unhealthy': return 'bg-red-500'
-    default: return 'bg-emerald-500'
-  }
-}
-
-const getHealthTextClass = (status: string | undefined) => {
-  switch (status) {
-    case 'healthy': return 'text-emerald-600'
-    case 'degraded': return 'text-amber-600'
-    case 'unhealthy': return 'text-red-600'
-    default: return 'text-emerald-600'
-  }
-}
-
-const getHealthDotClass = (status: string | undefined) => {
-  switch (status) {
-    case 'healthy': return 'bg-emerald-500'
-    case 'degraded': return 'bg-amber-500 animate-pulse'
-    case 'unhealthy': return 'bg-red-500 animate-pulse'
-    default: return 'bg-emerald-500'
-  }
-}
 
 const navigateToSystemHealth = () => {
   router.push('/admin/system-health')
@@ -896,10 +893,6 @@ const maxDeptCount = computed(() => {
   return Math.max(...stats.map((d: any) => d.count))
 })
 
-const getDeptPercentage = (count: number) => {
-  return Math.round((count / maxDeptCount.value) * 100)
-}
-
 // Radial Chart for Department Distribution
 const hoveredDept = ref<number | null>(null)
 const router = useRouter()
@@ -912,7 +905,8 @@ const totalDeptTickets = computed(() => {
 // Calculate radial segments with arc positions
 const radialDepartments = computed(() => {
   const stats = metrics.value.departments_stats || []
-  const sorted = [...stats].sort((a: any, b: any) => b.count - a.count).slice(0, 6)
+  // Sort by count descending - NO LIMIT to support unlimited departments
+  const sorted = [...stats].sort((a: any, b: any) => b.count - a.count)
   const total = totalDeptTickets.value || 1
   const circumference = 502.65 // 2 * PI * 80
   
@@ -942,20 +936,64 @@ const getDeptPressure = (dept: any) => {
   return 'low'
 }
 
-// Color by index and pressure
-const deptColors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4']
+// Legend progressive disclosure state
+const DEFAULT_VISIBLE_DEPTS = 8
+const legendMode = ref<'top' | 'all'>('top')
+const legendExpanded = ref(false)
+
+// Departments to show in legend (based on mode and expand state)
+const visibleLegendDepts = computed(() => {
+  if (legendMode.value === 'all' || legendExpanded.value) {
+    return radialDepartments.value
+  }
+  return radialDepartments.value.slice(0, DEFAULT_VISIBLE_DEPTS)
+})
+
+// Count of hidden departments when in collapsed mode
+const hiddenDeptCount = computed(() => 
+  Math.max(0, radialDepartments.value.length - DEFAULT_VISIBLE_DEPTS)
+)
+
+// Expanded color palette for unlimited departments (12 distinct colors)
+const deptColors = [
+  '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', 
+  '#ec4899', '#06b6d4', '#84cc16', '#f97316',
+  '#14b8a6', '#6366f1', '#ef4444', '#0ea5e9'
+]
+
 const getDeptColor = (index: number, pressure: string) => {
   if (pressure === 'high') return '#ef4444'
   if (pressure === 'medium') return '#f59e0b'
   return deptColors[index % deptColors.length]
 }
 
-const getPressureTextClass = (pressure: string) => {
-  switch (pressure) {
-    case 'high': return 'text-red-600'
-    case 'medium': return 'text-amber-600'
-    default: return 'text-emerald-600'
-  }
+// Department → Icon mapping (semantic icons for known departments)
+const deptIconMap: Record<string, string> = {
+  'emergency': 'ambulance',
+  'pediatrics': 'baby',
+  'cardiology': 'heart-pulse',
+  'ophthalmology': 'eye',
+  'neurology': 'brain',
+  'gastroenterology': 'stomach',
+  'orthopedics': 'bone',
+  'dermatology': 'hand-dots',
+  'ent': 'ear',
+  'internal-medicine': 'stethoscope',
+  'pulmonology': 'lungs',
+  'urology': 'droplet',
+  'nephrology': 'kidneys',
+  'psychiatry': 'brain',
+  'obstetrics': 'person-pregnant',
+  'oncology': 'ribbon',
+  'radiology': 'x-ray',
+  'laboratory': 'flask',
+  'pharmacy': 'pills'
+}
+
+const getDeptIcon = (slug: string | undefined): string => {
+  if (!slug) return 'building'
+  const normalizedSlug = slug.toLowerCase().replace(/\s+/g, '-')
+  return deptIconMap[normalizedSlug] || 'building'
 }
 
 const getHoveredDeptData = computed(() => {
@@ -974,60 +1012,7 @@ const pendingPercent = computed(() => Math.round((metrics.value.tickets?.pending
 const inProgressPercent = computed(() => Math.round((metrics.value.tickets?.in_progress || 0) / totalTickets.value * 100))
 const overduePercent = computed(() => Math.max(0, 100 - completedPercent.value - pendingPercent.value - inProgressPercent.value))
 
-// Interactive Pie Chart
-const selectedSlice = ref<string | null>(null)
-const { t } = useI18n()
-
-const selectSlice = (slice: string) => {
-  selectedSlice.value = selectedSlice.value === slice ? null : slice
-}
-
-const selectedSliceColor = computed(() => {
-  switch (selectedSlice.value) {
-    case 'completed': return 'text-emerald-600'
-    case 'pending': return 'text-amber-600'
-    case 'in_progress': return 'text-blue-600'
-    case 'overdue': return 'text-red-600'
-    default: return 'text-emerald-600'
-  }
-})
-
-const selectedSliceValue = computed(() => {
-  switch (selectedSlice.value) {
-    case 'completed': return metrics.value.tickets?.completed || 0
-    case 'pending': return metrics.value.tickets?.pending || 0
-    case 'in_progress': return metrics.value.tickets?.in_progress || 0
-    case 'overdue': return metrics.value.tickets?.overdue || 0
-    default: return metrics.value.tickets?.total || 0
-  }
-})
-
-const selectedSliceLabel = computed(() => {
-  switch (selectedSlice.value) {
-    case 'completed': return t('dashboard.completed')
-    case 'pending': return t('dashboard.pending')
-    case 'in_progress': return t('dashboard.inProgressTickets')
-    case 'overdue': return t('dashboard.overdueTickets')
-    default: return t('dashboard.totalTickets')
-  }
-})
-
-// Pie chart slice order for wheel navigation
-const sliceOrder = ['completed', 'pending', 'in_progress', 'overdue']
-
-const handlePieWheel = (e: WheelEvent) => {
-  const currentIndex = selectedSlice.value ? sliceOrder.indexOf(selectedSlice.value) : -1
-  
-  if (e.deltaY > 0) {
-    // Scroll down - next slice
-    const nextIndex = currentIndex >= sliceOrder.length - 1 ? 0 : currentIndex + 1
-    selectedSlice.value = sliceOrder[nextIndex]
-  } else {
-    // Scroll up - previous slice
-    const prevIndex = currentIndex <= 0 ? sliceOrder.length - 1 : currentIndex - 1
-    selectedSlice.value = sliceOrder[prevIndex]
-  }
-}
+// Ticket Sources computed
 
 const fetchMetrics = async () => {
   try {

@@ -82,12 +82,56 @@ class TicketController extends Controller
             $query->where('status', $request->status);
         }
         
-        // Apply department filter from request (for admins)
-        if ($request->filled('department_id') && $user->hasRole('admin')) {
-            $query->where('department_id', $request->department_id);
+        // Apply department filter from request
+        if ($request->filled('department')) {
+            $query->where('department_id', $request->department);
+        }
+        
+        // Apply priority filter
+        if ($request->filled('priority')) {
+            $query->where('priority', $request->priority);
+        }
+        
+        // Apply source filter
+        if ($request->filled('source')) {
+            $query->where('source', $request->source);
+        }
+        
+        // Apply SLA status filter
+        if ($request->filled('sla')) {
+            if ($request->sla === 'at_risk') {
+                // SLA at risk = deadline within 30 minutes
+                $query->whereNotNull('deadline')
+                      ->where('deadline', '>', now())
+                      ->where('deadline', '<=', now()->addMinutes(30))
+                      ->whereNull('completed_at');
+            } elseif ($request->sla === 'breached') {
+                // SLA breached = overdue
+                $query->where(function ($q) {
+                    $q->where('status', 'overdue')
+                      ->orWhere(function ($q2) {
+                          $q2->whereNotNull('deadline')
+                             ->where('deadline', '<', now())
+                             ->whereNull('completed_at');
+                      });
+                });
+            }
+        }
+        
+        // Apply text search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('subject', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%")
+                  ->orWhereHas('patient', function ($pq) use ($search) {
+                      $pq->where('name', 'like', "%{$search}%");
+                  });
+            });
         }
 
-        return response()->json($query->latest()->paginate(15));
+        return response()->json($query->latest()->paginate($user->hasRole('admin') ? 20 : 15));
     }
 
     /**

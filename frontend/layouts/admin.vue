@@ -46,6 +46,15 @@
               <Icon name="clock" size="md" :fixed-width="true" />
               <span v-if="!collapsed">{{ $t('commandCenter.slaMonitor') }}</span>
             </NuxtLink>
+            <NuxtLink 
+              to="/admin/tickets" 
+              class="nav-link" 
+              :class="[navLinkClass('/admin/tickets'), { 'justify-center': collapsed }]"
+              :title="collapsed ? $t('nav.tickets') : ''"
+            >
+              <Icon name="ticket" size="md" :fixed-width="true" />
+              <span v-if="!collapsed">{{ $t('nav.tickets') }}</span>
+            </NuxtLink>
           </div>
         </div>
 
@@ -223,6 +232,7 @@ const userInitials = computed(() =>
 const pageTitle = computed(() => {
   const path = route.path
   if (path.includes('dashboard')) return t('commandCenter.commandCenter')
+  if (path.includes('tickets')) return t('nav.tickets')
   if (path.includes('departments')) return t('nav.departments')
   if (path.includes('users')) return t('nav.users')
   if (path.includes('audit')) return t('nav.audit')
