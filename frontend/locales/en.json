@@ -405,6 +405,42 @@
         "showAll": "Show all",
         "collapse": "Collapse"
     },
+    "slaMonitor": {
+        "title": "SLA Monitor",
+        "subtitle": "Track SLA compliance across ticket lifecycle",
+        "pipelineTitle": "Ticket Lifecycle Pipeline",
+        "stages": {
+            "scheduled": "Scheduled",
+            "inQueue": "In Queue",
+            "created": "Created",
+            "awaitingResponse": "Awaiting Response",
+            "inProgress": "In Progress",
+            "awaitingExternal": "Awaiting External",
+            "resolved": "Resolved",
+            "breached": "SLA Breached"
+        },
+        "tooltip": {
+            "responseSlaAvg": "Response SLA avg",
+            "resolutionSlaAvg": "Resolution SLA avg",
+            "closeToBreachPercent": "% close to breach",
+            "clickToViewTickets": "Click to view tickets"
+        },
+        "toggle": {
+            "responseSla": "Response SLA",
+            "resolutionSla": "Resolution SLA"
+        },
+        "panels": {
+            "breachTimeline": "Breach Timeline (24h)",
+            "topOffenders": "Top SLA Offenders",
+            "slaRules": "SLA Rules",
+            "noBreaches": "No breaches recorded"
+        },
+        "time": {
+            "avg": "avg",
+            "minutes": "min",
+            "hours": "hours"
+        }
+    },
     "adminTickets": {
         "allTickets": "All Tickets",
         "subtitle": "Manage and monitor all system tickets",

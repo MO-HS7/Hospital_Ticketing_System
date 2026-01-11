@@ -40,6 +40,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tickets/{ticket}/complete', [\App\Http\Controllers\Api\TicketController::class, 'complete']);
     Route::post('/tickets/{ticket}/notes', [\App\Http\Controllers\Api\TicketController::class, 'addNote']);
     
+    // Slot Availability (for booking)
+    Route::get('/slots', [\App\Http\Controllers\Api\SlotController::class, 'index']);
+    Route::post('/slots/check', [\App\Http\Controllers\Api\SlotController::class, 'check']);
+    
     // Encounters (Phase 1)
     Route::apiResource('encounters', \App\Http\Controllers\Api\EncounterController::class);
     

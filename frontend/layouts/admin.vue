@@ -118,15 +118,6 @@
               <Icon name="shield-check" size="md" :fixed-width="true" />
               <span v-if="!collapsed">{{ $t('commandCenter.systemHealth') }}</span>
             </NuxtLink>
-            <NuxtLink 
-              to="/admin/maintenance-overview" 
-              class="nav-link" 
-              :class="[navLinkClass('/admin/maintenance-overview'), { 'justify-center': collapsed }]"
-              :title="collapsed ? $t('commandCenter.maintenanceOverview') : ''"
-            >
-              <Icon name="tools" size="md" :fixed-width="true" />
-              <span v-if="!collapsed">{{ $t('commandCenter.maintenanceOverview') }}</span>
-            </NuxtLink>
           </div>
         </div>
       </nav>
@@ -238,7 +229,6 @@ const pageTitle = computed(() => {
   if (path.includes('audit')) return t('nav.audit')
   if (path.includes('sla-monitor')) return t('commandCenter.slaMonitor')
   if (path.includes('system-health')) return t('commandCenter.systemHealth')
-  if (path.includes('maintenance-overview')) return t('commandCenter.maintenanceOverview')
   return t('nav.dashboard')
 })
 

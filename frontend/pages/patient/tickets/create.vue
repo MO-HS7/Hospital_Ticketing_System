@@ -96,29 +96,40 @@
         <div>
           <label class="label">{{ $t('tickets.datetime') }}</label>
           <!-- Date selector -->
-          <input v-model="selectedDate" type="date" :min="todayDate" :max="maxDate" class="input w-full mb-3" />
-          <!-- Time slots -->
-          <div v-if="selectedDate" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          <input v-model="selectedDate" type="date" :min="todayDate" :max="maxDate" class="input w-full mb-3" @change="onDateChange" />
+          
+          <!-- Slot Loading -->
+          <div v-if="loadingSlots" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            <div v-for="i in 8" :key="i" class="h-10 rounded-lg bg-[var(--color-bg-tertiary)] animate-pulse"></div>
+          </div>
+          
+          <!-- Time slots from API -->
+          <div v-else-if="selectedDate && isDateValid && availableTimeSlots.length > 0" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
             <button
               v-for="slot in availableTimeSlots"
-              :key="slot.value"
+              :key="slot.slot_start"
               @click="selectTimeSlot(slot)"
-              :disabled="slot.booked"
+              :disabled="slot.status === 'full'"
               type="button"
-              class="px-3 py-2 text-sm rounded-lg border transition-all"
-              :class="form.scheduled_at === slot.value 
-                ? 'border-primary-600 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-primary-600' 
-                : slot.booked 
-                  ? 'border-gray-200 bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed line-through'
-                  : 'border-[var(--color-border)] hover:border-primary-500 bg-[var(--color-bg-primary)]'"
+              class="relative px-3 py-2 text-sm rounded-lg border transition-all"
+              :class="getSlotClasses(slot)"
             >
-              {{ slot.label }}
+              {{ formatSlotTime(slot.slot_start) }}
+              <!-- Capacity indicator -->
+              <span v-if="slot.status === 'limited'" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-500"></span>
+              <span v-if="slot.status === 'full'" class="absolute inset-0 flex items-center justify-center bg-gray-200/80 dark:bg-gray-800/80 rounded-lg text-xs">Full</span>
             </button>
           </div>
+          
           <p v-if="!selectedDate" class="text-sm text-[var(--color-text-muted)]">{{ $t('createTicket.selectDate') }}</p>
-          <p v-else-if="!isDateValid" class="text-sm text-red-600 dark:text-red-400 font-medium">{{ $t('tickets.invalidDate') || 'Please select a valid date (today to 60 days ahead)' }}</p>
-          <p v-else-if="availableTimeSlots.length === 0" class="text-sm text-amber-600">{{ $t('tickets.noSlotsAvailable') }}</p>
-          <p v-if="form.scheduled_at" class="text-xs text-[var(--color-text-muted)] mt-2">{{ formatDateTimePreview(form.scheduled_at) }}</p>
+          <p v-else-if="!isDateValid" class="text-sm text-red-600 dark:text-red-400 font-medium">{{ $t('tickets.invalidDate') }}</p>
+          <p v-else-if="!loadingSlots && availableTimeSlots.length === 0" class="text-sm text-amber-600">{{ $t('tickets.noSlotsAvailable') }}</p>
+          
+          <!-- Selected slot preview -->
+          <div v-if="selectedSlot" class="mt-3 p-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-sm">
+            <span class="font-medium text-primary-700 dark:text-primary-300">{{ formatDateTimePreview(selectedSlot.slot_start) }}</span>
+            <span class="text-primary-600 dark:text-primary-400"> - {{ formatSlotTime(selectedSlot.slot_end) }}</span>
+          </div>
         </div>
 
         <!-- Patient Demographics Section -->
@@ -529,11 +540,14 @@ const form = ref({
   subject: '',
   description: '',
   scheduled_at: '',
+  slot_start: '',
+  slot_end: '',
+  slot_duration: 30,
   priority: 'medium',
   type: 'appointment',
-  payment_method: '', // 'online' or 'pay_at_hospital'
-  payment_provider: '', // 'visa_mastercard', 'paypal', 'bank_transfer'
-  // Patient Info fields (Step 3 enhancement)
+  payment_method: '',
+  payment_provider: '',
+  // Patient Info fields
   patient_age: null as number | null,
   patient_gender: '' as '' | 'male' | 'female',
   contact_method: '' as '' | 'phone' | 'whatsapp' | 'sms' | 'in_app',
@@ -545,7 +559,6 @@ const form = ref({
 
 // Payment flow state
 const paymentConfirmed = ref(false)
-const showPaymentProviders = ref(false) // Accordion state
 const APPOINTMENT_AMOUNT = 5000 // Fixed amount in YER
 
 const selectedDepartment = computed(() => departments.value.find(d => d.id === form.value.department_id))
@@ -562,7 +575,8 @@ const canProceed = computed(() => {
   if (currentStep.value === 2) {
     return !!form.value.subject && 
            !!form.value.description && 
-           !!form.value.scheduled_at && 
+           !!form.value.slot_start && 
+           !!form.value.slot_end &&
            isDateValid.value &&
            !!form.value.patient_age && form.value.patient_age > 0 &&
            !!form.value.patient_gender &&
@@ -660,51 +674,80 @@ const isDateValid = computed(() => {
   return true
 })
 
-// Working hours: 8 AM to 5 PM (configurable per department/doctor in future)
-const availableTimeSlots = computed(() => {
-  if (!selectedDate.value || !isDateValid.value) return []
-  
-  const slots: { value: string; label: string; booked: boolean }[] = []
-  const date = new Date(selectedDate.value)
-  
-  // Skip weekends (Friday/Saturday for Saudi)
-  const dayOfWeek = date.getDay()
-  if (dayOfWeek === 5 || dayOfWeek === 6) {
-    return [] // Weekend - no slots
-  }
-  
-  // Working hours: 8:00 AM to 5:00 PM, 30-minute intervals
-  for (let hour = 8; hour < 17; hour++) {
-    for (let min = 0; min < 60; min += 30) {
-      const slotDate = new Date(selectedDate.value)
-      slotDate.setHours(hour, min, 0, 0)
-      
-      // Skip past times for today
-      if (selectedDate.value === todayDate.value && slotDate <= new Date()) {
-        continue
-      }
-      
-      const timeStr = slotDate.toLocaleTimeString(locale.value, { 
-        hour: 'numeric', 
-        minute: '2-digit', 
-        hour12: true 
-      })
-      
-      slots.push({
-        value: slotDate.toISOString(),
-        label: timeStr,
-        booked: false // TODO: Check against existing bookings
-      })
-    }
-  }
-  
-  return slots
-})
+// Slot data from API
+interface SlotData {
+  slot_start: string
+  slot_end: string
+  capacity: number
+  booked: number
+  available: number
+  status: 'available' | 'limited' | 'full'
+}
 
-const selectTimeSlot = (slot: { value: string; label: string; booked: boolean }) => {
-  if (!slot.booked) {
-    form.value.scheduled_at = slot.value
+const loadingSlots = ref(false)
+const slotsFromApi = ref<SlotData[]>([])
+const selectedSlot = ref<SlotData | null>(null)
+
+const availableTimeSlots = computed(() => slotsFromApi.value)
+
+const onDateChange = () => {
+  selectedSlot.value = null
+  form.value.slot_start = ''
+  form.value.slot_end = ''
+  form.value.scheduled_at = ''
+  if (selectedDate.value && isDateValid.value && form.value.doctor_id) {
+    fetchSlots()
   }
+}
+
+const fetchSlots = async () => {
+  if (!form.value.doctor_id || !selectedDate.value) return
+  
+  loadingSlots.value = true
+  try {
+    const res = await $fetch<{ slots: SlotData[] }>(`${config.public.apiBase}/slots`, {
+      headers: { Authorization: `Bearer ${token.value}` },
+      params: {
+        doctor_id: form.value.doctor_id,
+        date: selectedDate.value
+      }
+    })
+    slotsFromApi.value = res.slots || []
+  } catch (e) {
+    console.error('[fetchSlots] Error:', e)
+    slotsFromApi.value = []
+  } finally {
+    loadingSlots.value = false
+  }
+}
+
+const formatSlotTime = (isoString: string) => {
+  return new Date(isoString).toLocaleTimeString(locale.value, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
+}
+
+const getSlotClasses = (slot: SlotData) => {
+  if (selectedSlot.value?.slot_start === slot.slot_start) {
+    return 'border-primary-600 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-2 ring-primary-600'
+  }
+  if (slot.status === 'full') {
+    return 'border-gray-200 bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+  }
+  if (slot.status === 'limited') {
+    return 'border-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:border-amber-500'
+  }
+  return 'border-[var(--color-border)] hover:border-primary-500 bg-[var(--color-bg-primary)]'
+}
+
+const selectTimeSlot = (slot: SlotData) => {
+  if (slot.status === 'full') return
+  selectedSlot.value = slot
+  form.value.slot_start = slot.slot_start
+  form.value.slot_end = slot.slot_end
+  form.value.scheduled_at = slot.slot_start
 }
 
 

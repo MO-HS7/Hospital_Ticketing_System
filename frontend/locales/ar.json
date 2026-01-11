@@ -381,6 +381,42 @@
         "showAll": "عرض الكل",
         "collapse": "طي"
     },
+    "slaMonitor": {
+        "title": "مراقبة SLA",
+        "subtitle": "تتبع الامتثال لـ SLA عبر دورة حياة التذكرة",
+        "pipelineTitle": "مسار دورة حياة التذكرة",
+        "stages": {
+            "scheduled": "مجدولة",
+            "inQueue": "في الانتظار",
+            "created": "منشأة",
+            "awaitingResponse": "بانتظار الرد",
+            "inProgress": "قيد التنفيذ",
+            "awaitingExternal": "بانتظار طرف خارجي",
+            "resolved": "مكتملة",
+            "breached": "تجاوز SLA"
+        },
+        "tooltip": {
+            "responseSlaAvg": "متوسط SLA الاستجابة",
+            "resolutionSlaAvg": "متوسط SLA الحل",
+            "closeToBreachPercent": "% قريب من التجاوز",
+            "clickToViewTickets": "انقر لعرض التذاكر"
+        },
+        "toggle": {
+            "responseSla": "SLA الاستجابة",
+            "resolutionSla": "SLA الحل"
+        },
+        "panels": {
+            "breachTimeline": "جدول التجاوزات (24 ساعة)",
+            "topOffenders": "الأعلى تجاوزاً",
+            "slaRules": "قواعد SLA",
+            "noBreaches": "لا توجد تجاوزات"
+        },
+        "time": {
+            "avg": "متوسط",
+            "minutes": "دقيقة",
+            "hours": "ساعة"
+        }
+    },
     "adminTickets": {
         "allTickets": "جميع التذاكر",
         "subtitle": "إدارة ومراقبة جميع تذاكر النظام",

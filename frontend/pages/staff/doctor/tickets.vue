@@ -8,6 +8,13 @@
           <p class="text-[var(--color-text-muted)]">{{ $t('doctor.subtitle') }}</p>
         </div>
         <div class="flex items-center gap-3 flex-wrap">
+          <!-- Current Slot Indicator -->
+          <div v-if="currentSlotInfo" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-300">
+            <svg class="w-4 h-4 text-emerald-600 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="6" />
+            </svg>
+            <span class="text-sm font-medium text-emerald-700 dark:text-emerald-300">{{ currentSlotInfo }}</span>
+          </div>
           <!-- Doctor identity chip -->
           <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-100 dark:bg-primary-900/30">
             <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,6 +22,16 @@
             </svg>
             <span class="text-sm font-medium text-primary-700 dark:text-primary-300">{{ user?.name }}</span>
           </div>
+          <!-- Slot Filter Toggle -->
+          <button 
+            @click="showCurrentSlotOnly = !showCurrentSlotOnly" 
+            class="text-sm px-3 py-1.5 rounded-full border transition-all"
+            :class="showCurrentSlotOnly 
+              ? 'bg-primary-100 dark:bg-primary-900/30 border-primary-400 text-primary-700 dark:text-primary-300' 
+              : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-tertiary)]'"
+          >
+            {{ showCurrentSlotOnly ? 'Current Slot' : 'All Slots' }}
+          </button>
           <!-- Quick Actions -->
           <button @click="loadTickets" :disabled="listLoading" class="btn-ghost text-sm">
             <svg class="w-4 h-4 icon-flip" :class="{ 'animate-spin': listLoading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,6 +101,7 @@
             />
           </div>
           <select v-model="sortBy" class="input w-full sm:w-auto">
+            <option value="slot_start">By Slot Time</option>
             <option value="newest">{{ $t('doctor.sortNewest') }}</option>
             <option value="deadline">{{ $t('doctor.sortDeadline') }}</option>
             <option value="priority">{{ $t('doctor.sortPriority') }}</option>
@@ -169,7 +187,14 @@
                     </svg>
                     {{ t.patient?.name || '-' }}
                   </span>
-                  <span class="flex items-center gap-1">
+                  <!-- Show slot time prominently -->
+                  <span v-if="t.slot_start && t.slot_end" class="flex items-center gap-1 text-primary-600 dark:text-primary-400 font-medium">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {{ formatSlotTime(t.slot_start) }} - {{ formatSlotTime(t.slot_end) }}
+                  </span>
+                  <span v-else class="flex items-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -194,14 +219,7 @@
 
               <!-- Actions -->
               <div class="flex gap-2 shrink-0">
-                <button
-                  v-if="canAccept(t)"
-                  :disabled="actionLoading"
-                  @click="handleAccept(t.id)"
-                  class="btn-primary text-sm"
-                >
-                  {{ $t('doctor.accept') }}
-                </button>
+                <!-- Start button (auto-transition when slot starts) -->
                 <button
                   v-if="canStart(t)"
                   :disabled="actionLoading"
@@ -247,14 +265,34 @@ definePageMeta({ layout: false, middleware: ['auth'] })
 const { t, locale } = useI18n()
 const { user } = useAuth()
 
-const { fetchTickets, acceptTicket, startTicket, completeTicket, error: ticketsError } = useTickets()
+const { fetchTickets, startTicket, completeTicket, error: ticketsError } = useTickets()
 
 const tickets = ref<TicketBase[]>([])
 const listLoading = ref(false)
 const actionLoading = ref(false)
 const activeStatus = ref<string>('all')
 const searchQuery = ref('')
-const sortBy = ref<'newest' | 'deadline' | 'priority'>('newest')
+const sortBy = ref<'slot_start' | 'newest' | 'deadline' | 'priority'>('slot_start')
+const showCurrentSlotOnly = ref(true) // Default: show only current slot
+
+// Current slot info
+const currentSlotInfo = computed(() => {
+  const now = new Date()
+  const hour = now.getHours()
+  const minute = now.getMinutes()
+  const slotStart = minute < 30 ? `${hour}:00` : `${hour}:30`
+  const slotEnd = minute < 30 ? `${hour}:30` : `${hour + 1}:00`
+  return `${slotStart} - ${slotEnd}`
+})
+
+// Check if ticket is in current slot
+const isInCurrentSlot = (t: TicketBase) => {
+  if (!t.slot_start || !t.slot_end) return true // Show tickets without slot data
+  const now = new Date()
+  const slotStart = new Date(t.slot_start)
+  const slotEnd = new Date(t.slot_end)
+  return now >= slotStart && now < slotEnd
+}
 
 const loadTickets = async () => {
   listLoading.value = true
@@ -270,14 +308,14 @@ onMounted(async () => {
   await loadTickets()
 })
 
-// Stats computed
+// Stats computed - updated for slot-based statuses
 const stats = computed(() => [
   { key: 'total', label: t('doctor.statTotal'), value: tickets.value.length, colorClass: 'text-primary-600', filterValue: 'all' },
-  { key: 'pending', label: t('doctor.statPending'), value: tickets.value.filter(t => t.status === 'pending' || t.status === 'assigned').length, colorClass: 'text-amber-600', filterValue: 'pending' },
+  { key: 'inQueue', label: 'In Queue', value: tickets.value.filter(t => t.status === 'in_queue' || t.status === 'pending').length, colorClass: 'text-amber-600', filterValue: 'in_queue' },
   { key: 'inProgress', label: t('doctor.statInProgress'), value: tickets.value.filter(t => t.status === 'in_progress').length, colorClass: 'text-blue-600', filterValue: 'in_progress' },
-  { key: 'completed', label: t('doctor.statCompleted'), value: tickets.value.filter(t => t.status === 'completed' || t.status === 'closed_late').length, colorClass: 'text-green-600', filterValue: 'completed' },
+  { key: 'completed', label: t('doctor.statCompleted'), value: tickets.value.filter(t => t.status === 'completed').length, colorClass: 'text-green-600', filterValue: 'completed' },
+  { key: 'scheduled', label: 'Scheduled', value: tickets.value.filter(t => t.status === 'scheduled').length, colorClass: 'text-slate-600', filterValue: 'scheduled' },
   { key: 'overdue', label: t('doctor.statOverdue'), value: tickets.value.filter(t => isOverdue(t.deadline)).length, colorClass: 'text-red-600', filterValue: 'overdue' },
-  { key: 'closedLate', label: t('doctor.statClosedLate'), value: tickets.value.filter(t => t.status === 'closed_late').length, colorClass: 'text-orange-600', filterValue: 'closed_late' },
 ])
 
 const tabs = computed(() => [
@@ -295,14 +333,19 @@ const setStatusFilter = (status: string) => {
 const filteredTickets = computed(() => {
   let result = [...tickets.value]
 
+  // Current slot filter
+  if (showCurrentSlotOnly.value) {
+    result = result.filter(t => isInCurrentSlot(t))
+  }
+
   // Status filter
   if (activeStatus.value !== 'all') {
     if (activeStatus.value === 'completed') {
       result = result.filter(t => t.status === 'completed' || t.status === 'closed_late')
     } else if (activeStatus.value === 'overdue') {
       result = result.filter(t => isOverdue(t.deadline))
-    } else if (activeStatus.value === 'pending') {
-      result = result.filter(t => t.status === 'pending' || t.status === 'assigned')
+    } else if (activeStatus.value === 'in_queue') {
+      result = result.filter(t => t.status === 'in_queue' || t.status === 'pending')
     } else {
       result = result.filter(t => t.status === activeStatus.value)
     }
@@ -318,9 +361,11 @@ const filteredTickets = computed(() => {
     )
   }
 
-  // Sorting
+  // Sorting - default by slot_start
   result.sort((a, b) => {
-    if (sortBy.value === 'deadline') {
+    if (sortBy.value === 'slot_start') {
+      return new Date(a.slot_start || a.scheduled_at || 0).getTime() - new Date(b.slot_start || b.scheduled_at || 0).getTime()
+    } else if (sortBy.value === 'deadline') {
       return new Date(a.deadline || 0).getTime() - new Date(b.deadline || 0).getTime()
     } else if (sortBy.value === 'priority') {
       const order = { urgent: 0, high: 1, medium: 2, low: 3 }
@@ -349,15 +394,12 @@ const isOverdue = (deadline: string | null) => {
   return new Date(deadline) < new Date()
 }
 
-const canAccept = (t: TicketBase) => {
-  if (t.status !== 'pending') return false
-  if (!user.value) return false
-  return t.assigned_to === null
-}
-
+// Slot-based workflow: only show Start if ticket is in current slot and in_queue/pending
 const canStart = (t: TicketBase) => {
-  if (t.status !== 'pending' && t.status !== 'assigned') return false
+  if (!['pending', 'in_queue', 'scheduled'].includes(t.status)) return false
   if (!user.value) return false
+  // Must be in current slot or no slot defined
+  if (t.slot_start && !isInCurrentSlot(t)) return false
   return t.assigned_to === user.value.id
 }
 
@@ -367,15 +409,14 @@ const canComplete = (t: TicketBase) => {
   return t.assigned_to === user.value.id
 }
 
-const handleAccept = async (ticketId: number) => {
-  actionLoading.value = true
-  try {
-    const updated = await acceptTicket(ticketId)
-    if (!updated) return
-    await loadTickets()
-  } finally {
-    actionLoading.value = false
-  }
+// Format slot time for display
+const formatSlotTime = (dateStr: string) => {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleTimeString(locale.value === 'ar' ? 'ar-SA' : 'en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
 }
 
 const handleStart = async (ticketId: number) => {
@@ -402,11 +443,6 @@ const handleComplete = async (ticketId: number) => {
 
 const detailsOpen = ref(false)
 const selectedTicketId = ref<number | null>(null)
-
-const openDetails = (ticketId: number) => {
-  selectedTicketId.value = ticketId
-  detailsOpen.value = true
-}
 
 const handleTicketUpdated = async () => {
   await loadTickets()

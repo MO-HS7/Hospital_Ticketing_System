@@ -1,6 +1,7 @@
-export type TicketStatus = 'pending' | 'assigned' | 'awaiting_payment' | 'in_progress' | 'completed' | 'overdue' | 'closed_late'
+export type TicketStatus = 'pending' | 'assigned' | 'awaiting_payment' | 'in_progress' | 'completed' | 'overdue' | 'closed_late' | 'scheduled' | 'in_queue' | 'cancelled' | 'no_show'
 export type TicketType = 'appointment' | 'maintenance'
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent'
+export type TicketSource = 'manual' | 'chatbot'
 
 export interface TicketUser {
   id: number
@@ -61,9 +62,19 @@ export interface TicketBase {
   type: TicketType
   status: TicketStatus
   priority: TicketPriority
+  source?: TicketSource
   subject: string
   description: string | null
+  // Slot-based scheduling fields
+  slot_start?: string | null
+  slot_end?: string | null
+  slot_duration?: number
   scheduled_at: string | null
+  // SLA tracking
+  sla_response_minutes?: number
+  sla_resolution_minutes?: number
+  response_started_at?: string | null
+  resolution_started_at?: string | null
   deadline: string | null
   accepted_at: string | null
   started_at: string | null
@@ -75,7 +86,7 @@ export interface TicketBase {
   department?: TicketDepartment
   assignee?: TicketUser | null
   sla?: TicketSla
-  // Patient Info fields (Step 3 enhancement)
+  // Patient Info fields
   patient_age?: number | null
   patient_gender?: 'male' | 'female' | null
   contact_method?: 'phone' | 'whatsapp' | 'sms' | 'in_app' | null
