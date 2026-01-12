@@ -85,6 +85,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         Route::get('/metrics', [\App\Http\Controllers\Api\AdminController::class, 'metrics']);
         Route::get('/audit-log', [\App\Http\Controllers\Api\AdminController::class, 'auditLog']);
+        Route::get('/audit-log-v2', [\App\Http\Controllers\Api\AdminController::class, 'auditLogV2']);
+        Route::get('/audit-log/export', [\App\Http\Controllers\Api\AdminController::class, 'exportAuditLog']);
         Route::get('/insights', [\App\Http\Controllers\Api\AdminController::class, 'insights']);
         Route::get('/activity-feed', [\App\Http\Controllers\Api\AdminController::class, 'activityFeed']);
         Route::get('/system-health', [\App\Http\Controllers\Api\AdminController::class, 'systemHealth']);

@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Add ForcePatientIdForPatients to api group (runs after auth)
         $middleware->api(append: [
             \App\Http\Middleware\ForcePatientIdForPatients::class,
+            \App\Http\Middleware\AuditContextMiddleware::class,
         ]);
 
         $middleware->alias([

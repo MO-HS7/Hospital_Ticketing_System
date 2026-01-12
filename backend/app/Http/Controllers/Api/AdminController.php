@@ -109,25 +109,438 @@ class AdminController extends Controller
 
     /**
      * Get audit log (ticket events) with optimized eager loading.
+     * Supports enterprise-grade filtering for compliance audit trails.
+     * 
+     * Query params:
+     *   - page, per_page (pagination)
+     *   - from, to (date range, inclusive)
+     *   - event_type (string)
+     *   - q (search: ticket ID, subject, user name)
+     *   - actor_id (int, who performed action)
+     *   - role (string: doctor, admin, reception, etc.)
+     *   - department_id (string/uuid)
+     *   - has_diff (0/1: only events with old_value/new_value)
      */
     public function auditLog(Request $request)
     {
         $query = TicketEvent::select(['id', 'ticket_id', 'user_id', 'event_type', 'meta', 'created_at'])
             ->with([
-                'user:id,name',
-                'ticket:id,subject,type,department_id',
-                'ticket.department:id,name_en,name_ar',
+                'user:id,name,email',
+                'user.roles:id,name',
+                'ticket:id,subject,type,department_id,patient_id,priority,status',
+                'ticket.department:id,name_en,name_ar,slug',
+                'ticket.patient:id,name',
             ]);
 
+        // Filter by event type
         if ($request->filled('event_type')) {
             $query->where('event_type', $request->event_type);
         }
 
+        // Filter by ticket ID
         if ($request->filled('ticket_id')) {
             $query->where('ticket_id', $request->ticket_id);
         }
 
-        return response()->json($query->latest()->paginate(20));
+        // Filter by actor ID (who performed the action)
+        if ($request->filled('actor_id')) {
+            $query->where('user_id', $request->actor_id);
+        }
+
+        // Filter by date range (inclusive)
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->from);
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->to);
+        }
+
+        // Legacy support for date_from/date_to
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Filter by role (via user's roles - Spatie)
+        if ($request->filled('role')) {
+            $query->whereHas('user.roles', fn($q) => $q->where('name', $request->role));
+        }
+
+        // Filter by department (via ticket join)
+        if ($request->filled('department_id')) {
+            $query->whereHas('ticket', fn($q) => $q->where('department_id', $request->department_id));
+        }
+
+        // Filter by has_diff (events with old_value/new_value in meta)
+        if ($request->filled('has_diff') && $request->has_diff == '1') {
+            $query->where(function ($q) {
+                $q->whereRaw("JSON_EXTRACT(meta, '$.from') IS NOT NULL")
+                  ->orWhereRaw("JSON_EXTRACT(meta, '$.to') IS NOT NULL")
+                  ->orWhereRaw("JSON_EXTRACT(meta, '$.old_status') IS NOT NULL")
+                  ->orWhereRaw("JSON_EXTRACT(meta, '$.new_status') IS NOT NULL");
+            });
+        }
+
+        // Search filter (q): ticket ID, subject, user name
+        if ($request->filled('q')) {
+            $search = $request->q;
+            
+            // If numeric, treat as ticket ID
+            if (is_numeric($search)) {
+                $query->where('ticket_id', $search);
+            } else {
+                $query->where(function ($q) use ($search) {
+                    // Search in ticket subject
+                    $q->whereHas('ticket', fn($tq) => $tq->where('subject', 'like', "%{$search}%"))
+                      // Search in user name
+                      ->orWhereHas('user', fn($uq) => $uq->where('name', 'like', "%{$search}%"));
+                });
+            }
+        }
+
+        $perPage = min($request->input('per_page', 25), 50);
+
+        $paginated = $query->latest()->paginate($perPage);
+
+        // Transform response to include nested actor/ticket objects and summary_key
+        $data = collect($paginated->items())->map(function ($event) {
+            $meta = $event->meta ?? [];
+            
+            // Build summary params based on event type
+            $summaryParams = $this->buildSummaryParams($event, $meta);
+            
+            return [
+                'id' => $event->id,
+                'event_type' => $event->event_type,
+                'created_at' => $event->created_at->toIso8601String(),
+                
+                // Nested actor object
+                'actor' => $event->user ? [
+                    'id' => $event->user->id,
+                    'name' => $event->user->name,
+                    'email' => $event->user->email,
+                    'role' => $event->user->roles->first()?->name,
+                ] : null,
+                
+                // Nested ticket object
+                'ticket' => $event->ticket ? [
+                    'id' => $event->ticket->id,
+                    'number' => "#{$event->ticket->id}",
+                    'subject' => $event->ticket->subject,
+                    'type' => $event->ticket->type,
+                    'priority' => $event->ticket->priority,
+                    'status' => $event->ticket->status,
+                    'department_id' => $event->ticket->department_id,
+                    'department_name_en' => $event->ticket->department?->name_en,
+                    'department_name_ar' => $event->ticket->department?->name_ar,
+                    'department_slug' => $event->ticket->department?->slug,
+                    'patient_id' => $event->ticket->patient_id,
+                    'patient_name' => $event->ticket->patient?->name,
+                ] : null,
+                
+                // i18n summary support
+                'summary_key' => "audit.summary.{$event->event_type}",
+                'summary_params' => $summaryParams,
+                
+                // Raw meta for diff/details view
+                'old_value' => isset($meta['from']) ? ['status' => $meta['from']] : 
+                              (isset($meta['old_status']) ? ['status' => $meta['old_status']] : null),
+                'new_value' => isset($meta['to']) ? ['status' => $meta['to']] :
+                              (isset($meta['new_status']) ? ['status' => $meta['new_status']] : null),
+                'meta' => $meta,
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Build summary params for i18n interpolation.
+     */
+    private function buildSummaryParams($event, array $meta): array
+    {
+        $params = [
+            'actor' => $event->user?->name ?? 'System',
+            'ticket' => $event->ticket_id,
+        ];
+
+        switch ($event->event_type) {
+            case 'status_changed':
+                $params['from'] = $meta['from'] ?? $meta['old_status'] ?? 'unknown';
+                $params['to'] = $meta['to'] ?? $meta['new_status'] ?? 'unknown';
+                break;
+            case 'priority_changed':
+                $params['from'] = $meta['from'] ?? 'unknown';
+                $params['to'] = $meta['to'] ?? 'unknown';
+                break;
+            case 'assigned':
+                $params['assignee'] = $meta['assigned_to'] ?? $meta['assignee_name'] ?? 'unknown';
+                break;
+            case 'note_added':
+                $params['note'] = $meta['note'] ?? '';
+                break;
+        }
+
+        return $params;
+    }
+
+    /**
+     * Audit Log V2 - Uses new audit_events table with polymorphic auditing.
+     * 
+     * Query params:
+     *   - All Phase 1 params (page, per_page, from, to, event_type, q, actor_id, role, department_id, has_diff)
+     *   - auditable_type (string: ticket, user, payment, etc.)
+     *   - auditable_id (int: specific resource ID)
+     *   - include_facets (0/1: include aggregated counts)
+     */
+    public function auditLogV2(Request $request)
+    {
+        $query = \App\Models\AuditEvent::query()
+            ->with(['actor:id,name,email', 'department:id,name_en,name_ar,slug']);
+
+        // Filter by auditable type
+        if ($request->filled('auditable_type')) {
+            $query->ofType($request->auditable_type);
+        }
+
+        // Filter by specific auditable
+        if ($request->filled('auditable_id')) {
+            $query->where('auditable_id', $request->auditable_id);
+        }
+
+        // Filter by event type
+        if ($request->filled('event_type')) {
+            $query->ofEventType($request->event_type);
+        }
+
+        // Filter by actor
+        if ($request->filled('actor_id')) {
+            $query->byActor($request->actor_id);
+        }
+
+        // Filter by role
+        if ($request->filled('role')) {
+            $query->byRole($request->role);
+        }
+
+        // Filter by department
+        if ($request->filled('department_id')) {
+            $query->inDepartment($request->department_id);
+        }
+
+        // Filter by date range
+        $query->dateRange($request->from, $request->to);
+
+        // Filter by has_diff
+        if ($request->filled('has_diff') && $request->has_diff == '1') {
+            $query->withChanges();
+        }
+
+        // Search
+        if ($request->filled('q')) {
+            $query->search($request->q);
+        }
+
+        $perPage = min($request->input('per_page', 25), 50);
+        $paginated = $query->latest()->paginate($perPage);
+
+        // Transform response
+        $data = collect($paginated->items())->map(function ($event) {
+            return [
+                'id' => $event->id,
+                'auditable_type' => $event->auditable_type,
+                'auditable_id' => $event->auditable_id,
+                'event_type' => $event->event_type,
+                'created_at' => $event->created_at->toIso8601String(),
+                
+                'actor' => $event->actor ? [
+                    'id' => $event->actor->id,
+                    'name' => $event->actor->name,
+                    'email' => $event->actor->email,
+                    'role' => $event->actor_role,
+                ] : null,
+                
+                'department_id' => $event->department_id,
+                'department' => $event->department ? [
+                    'id' => $event->department->id,
+                    'name_en' => $event->department->name_en,
+                    'name_ar' => $event->department->name_ar,
+                ] : null,
+                
+                // Request metadata
+                'ip_address' => $event->ip_address,
+                'user_agent' => $event->user_agent,
+                'route' => $event->route,
+                'method' => $event->method,
+                'request_id' => $event->request_id,
+                
+                // i18n support
+                'summary_key' => $event->summary_key ?? "audit.summary.{$event->auditable_type}.{$event->event_type}",
+                'summary_params' => $event->summary_params ?? ['id' => $event->auditable_id],
+                
+                // Change data
+                'old_value' => $event->old_value,
+                'new_value' => $event->new_value,
+                'meta' => $event->meta,
+            ];
+        });
+
+        $response = [
+            'data' => $data,
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ],
+        ];
+
+        // Add facets if requested
+        if ($request->input('include_facets') == '1') {
+            $response['facets'] = $this->buildAuditFacets($request);
+        }
+
+        return response()->json($response);
+    }
+
+    /**
+     * Build facets for audit log (counts by event_type, role, department).
+     */
+    private function buildAuditFacets(Request $request): array
+    {
+        $baseQuery = \App\Models\AuditEvent::query();
+
+        // Apply same filters (except pagination)
+        if ($request->filled('auditable_type')) {
+            $baseQuery->ofType($request->auditable_type);
+        }
+        if ($request->filled('from') || $request->filled('to')) {
+            $baseQuery->dateRange($request->from, $request->to);
+        }
+        
+        return [
+            'by_event_type' => (clone $baseQuery)
+                ->selectRaw('event_type, COUNT(*) as count')
+                ->groupBy('event_type')
+                ->pluck('count', 'event_type')
+                ->toArray(),
+            'by_role' => (clone $baseQuery)
+                ->whereNotNull('actor_role')
+                ->selectRaw('actor_role, COUNT(*) as count')
+                ->groupBy('actor_role')
+                ->pluck('count', 'actor_role')
+                ->toArray(),
+            'by_department' => (clone $baseQuery)
+                ->whereNotNull('department_id')
+                ->selectRaw('department_id, COUNT(*) as count')
+                ->groupBy('department_id')
+                ->pluck('count', 'department_id')
+                ->toArray(),
+        ];
+    }
+
+    /**
+     * Export audit log as CSV (streaming).
+     */
+    public function exportAuditLog(Request $request)
+    {
+        // Require date range for safety
+        if (config('audit.export.require_date_range', true)) {
+            if (!$request->filled('from') || !$request->filled('to')) {
+                return response()->json([
+                    'error' => 'Date range (from/to) is required for export'
+                ], 422);
+            }
+            
+            // Check max date range
+            $maxDays = config('audit.export.max_date_range_days', 90);
+            $from = \Carbon\Carbon::parse($request->from);
+            $to = \Carbon\Carbon::parse($request->to);
+            if ($from->diffInDays($to) > $maxDays) {
+                return response()->json([
+                    'error' => "Date range cannot exceed {$maxDays} days"
+                ], 422);
+            }
+        }
+
+        $filename = 'audit_log_' . now()->format('Y-m-d_His') . '.csv';
+
+        return response()->stream(function () use ($request) {
+            $handle = fopen('php://output', 'w');
+
+            // CSV Header
+            fputcsv($handle, [
+                'ID', 'Type', 'Resource ID', 'Event', 'Actor', 'Actor Role',
+                'Department', 'IP Address', 'Route', 'Method', 'Request ID',
+                'Created At', 'Summary'
+            ]);
+
+            // Stream results in chunks
+            $query = \App\Models\AuditEvent::query()
+                ->with(['actor:id,name', 'department:id,name_en']);
+
+            if ($request->filled('auditable_type')) {
+                $query->ofType($request->auditable_type);
+            }
+            if ($request->filled('event_type')) {
+                $query->ofEventType($request->event_type);
+            }
+            if ($request->filled('actor_id')) {
+                $query->byActor($request->actor_id);
+            }
+            if ($request->filled('role')) {
+                $query->byRole($request->role);
+            }
+            if ($request->filled('department_id')) {
+                $query->inDepartment($request->department_id);
+            }
+            $query->dateRange($request->from, $request->to);
+
+            $maxRows = config('audit.export.max_rows', 10000);
+            $count = 0;
+
+            $query->latest()->chunk(500, function ($events) use ($handle, &$count, $maxRows) {
+                foreach ($events as $event) {
+                    if ($count >= $maxRows) {
+                        return false; // Stop chunking
+                    }
+
+                    fputcsv($handle, [
+                        $event->id,
+                        $event->auditable_type,
+                        $event->auditable_id,
+                        $event->event_type,
+                        $event->actor?->name ?? 'System',
+                        $event->actor_role ?? '',
+                        $event->department?->name_en ?? '',
+                        $event->ip_address ?? '',
+                        $event->route ?? '',
+                        $event->method ?? '',
+                        $event->request_id ?? '',
+                        $event->created_at->toIso8601String(),
+                        $event->summary_key ?? '',
+                    ]);
+
+                    $count++;
+                }
+            });
+
+            fclose($handle);
+        }, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+        ]);
     }
 
     /**
@@ -273,19 +686,62 @@ class AdminController extends Controller
      */
     public function systemHealth()
     {
-        $health = [
-            'database' => $this->checkDatabase(),
-            'cache' => $this->checkCache(),
-            'queue' => $this->checkQueue(),
-            'storage' => $this->checkStorage(),
-            'timestamp' => now()->toIso8601String(),
+        $database = $this->checkDatabase();
+        $cache = $this->checkCache();
+        $queue = $this->checkQueue();
+        $storage = $this->checkStorage();
+        
+        $services = [
+            'database' => $database,
+            'cache' => $cache,
+            'queue' => $queue,
+            'storage' => $storage,
         ];
-
-        $health['overall'] = collect($health)
-            ->filter(fn($v) => is_array($v) && isset($v['status']))
-            ->every(fn($v) => $v['status'] === 'healthy') ? 'healthy' : 'degraded';
-
-        return response()->json($health);
+        
+        // Determine overall status and build reason summary
+        $reasons = [];
+        $hasCritical = false;
+        $hasDegraded = false;
+        
+        foreach ($services as $name => $service) {
+            $status = $service['status'] ?? 'unknown';
+            if ($status === 'unhealthy' || $status === 'down') {
+                $hasCritical = true;
+                $reasons[] = ucfirst($name) . ' is ' . $status;
+            } elseif ($status === 'degraded' || $status === 'warning') {
+                $hasDegraded = true;
+                $reasons[] = ucfirst($name) . ' is ' . $status;
+            } elseif ($status === 'unknown') {
+                $hasDegraded = true;
+                $reasons[] = ucfirst($name) . ' status unknown';
+            }
+        }
+        
+        $overallStatus = 'healthy';
+        if ($hasCritical) {
+            $overallStatus = 'unhealthy';
+        } elseif ($hasDegraded) {
+            $overallStatus = 'degraded';
+        }
+        
+        $reasonSummary = empty($reasons) ? 'All systems operational' : implode(', ', $reasons);
+        
+        return response()->json([
+            'overall_status' => $overallStatus,
+            'overall' => $overallStatus, // Legacy support
+            'reason_summary' => $reasonSummary,
+            'timestamp' => now()->toIso8601String(),
+            'last_checked_at' => now()->toIso8601String(),
+            'database' => $database,
+            'cache' => $cache,
+            'queue' => $queue,
+            'storage' => $storage,
+            'app' => [
+                'version' => config('app.version', '1.0.0'),
+                'environment' => config('app.env'),
+                'debug' => config('app.debug'),
+            ],
+        ]);
     }
 
     private function checkDatabase(): array

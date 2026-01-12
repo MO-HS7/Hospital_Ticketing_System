@@ -34,7 +34,8 @@
         "summary": "Summary",
         "notProvided": "Not provided",
         "unknownPatient": "Unknown Patient",
-        "notAssigned": "Not assigned"
+        "notAssigned": "Not assigned",
+        "justNow": "Just now"
     },
     "nav": {
         "home": "Home",
@@ -85,14 +86,6 @@
     },
     "table": {
         "id": "ID"
-    },
-    "dashboard": {
-        "tickets": "Tickets",
-        "totalTickets": "Total Tickets",
-        "completed": "Completed",
-        "pending": "Pending",
-        "inProgressTickets": "In Progress",
-        "overdueTickets": "Overdue"
     },
     "roles": {
         "title": "Select Your Role",
@@ -208,15 +201,10 @@
         "unknownPatient": "Unknown Patient",
         "notAssigned": "Not assigned",
         "ticketDetails": "Ticket Details",
-        "timeline": "Timeline & Notes",
-        "noNotes": "No notes yet",
-        "details": "Details",
+        "timelineAndNotes": "Timeline & Notes",
         "timestamps": "Timestamps",
         "assignedTo": "Assigned To",
         "unassigned": "Unassigned",
-        "deadline": "Deadline",
-        "acceptedAt": "Accepted At",
-        "completedAt": "Completed At",
         "noDescription": "No description provided"
     },
     "ticketStatus": {
@@ -290,6 +278,7 @@
     },
     "dashboard": {
         "title": "Dashboard",
+        "tickets": "Tickets",
         "totalTickets": "Total Tickets",
         "pendingTickets": "Pending",
         "inProgressTickets": "In Progress",
@@ -384,8 +373,6 @@
         "noData": "No data available",
         "slaStatus": "SLA Status",
         "onTrack": "On Track",
-        "slaWarningShort": "Warning",
-        "slaCritical": "Critical",
         "dailyOperations": "Daily Operations",
         "completedTotal": "Completed",
         "stillOpen": "Still Open",
@@ -396,14 +383,21 @@
         "mediumPressure": "Moderate Load",
         "highPressure": "High Pressure",
         "allClear": "All clear",
-        "degraded": "Degraded",
-        "unhealthy": "Unhealthy",
         "needsAttention": "Needs Attention",
         "allSystemsOk": "All Systems OK",
         "topDepartments": "Top",
         "allDepartments": "All",
         "showAll": "Show all",
-        "collapse": "Collapse"
+        "unknown": "Unknown",
+        "down": "Down",
+        "appInfo": "Application Info",
+        "version": "Version",
+        "environment": "Environment",
+        "debugMode": "Debug Mode",
+        "driver": "Driver",
+        "failedJobs": "Failed Jobs",
+        "used": "Used",
+        "free": "Free"
     },
     "slaMonitor": {
         "title": "SLA Monitor",
@@ -524,19 +518,86 @@
     },
     "audit": {
         "title": "Audit Log",
-        "subtitle": "Track all ticket-related activities and changes",
+        "subtitle": "Enterprise audit trail for compliance and accountability",
         "allEvents": "All Events",
         "system": "System",
         "on": "on",
         "ticket": "Ticket",
+        "by": "By",
+        "target": "Target",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "showing": "Showing",
+        "of": "of",
+        "totalRecords": "Total Records",
+        "assignedTo": "Assigned to",
+        "viewTechnicalDetails": "View technical details",
+        "refresh": "Refresh",
+        "clearFilters": "Clear Filters",
+        "searchPlaceholder": "Search tickets, users...",
+        "allRoles": "All Roles",
+        "allDepartments": "All Departments",
+        "dateFrom": "From",
+        "dateTo": "To",
+        "perPage": "Per page",
+        "onlyWithChanges": "Only events with changes",
+        "hasDiff": "Has changes",
+        "tryAdjustFilters": "Try adjusting your filters",
+        "viewTicket": "View Ticket",
+        "filters": {
+            "allActions": "All Actions",
+            "ticketId": "Ticket #",
+            "reset": "Reset"
+        },
         "events": {
             "created": "Created",
             "accepted": "Accepted",
+            "started": "Started",
             "completed": "Completed",
             "status_changed": "Status Changed",
             "note_added": "Note Added",
             "priority_changed": "Priority Changed",
-            "assigned": "Assigned"
+            "assigned": "Assigned",
+            "cancelled": "Cancelled"
+        },
+        "detail": {
+            "title": "Event Details",
+            "summaryTab": "Summary",
+            "changesTab": "Changes",
+            "rawTab": "Raw JSON",
+            "metadataTab": "Metadata",
+            "noChanges": "No field changes recorded",
+            "fieldChanged": "{field} changed",
+            "from": "From",
+            "to": "To"
+        },
+        "summary": {
+            "created": "{actor} created ticket #{ticket}",
+            "accepted": "{actor} accepted ticket #{ticket}",
+            "started": "{actor} started working on ticket #{ticket}",
+            "completed": "{actor} completed ticket #{ticket}",
+            "status_changed": "{actor} changed status from {from} to {to}",
+            "note_added": "{actor} added a note to ticket #{ticket}",
+            "priority_changed": "{actor} changed priority from {from} to {to}",
+            "assigned": "{actor} assigned ticket #{ticket} to {assignee}",
+            "cancelled": "{actor} cancelled ticket #{ticket}"
+        },
+        "metadata": {
+            "ipAddress": "IP Address",
+            "userAgent": "User Agent",
+            "requestDetails": "Request Details",
+            "method": "Method",
+            "route": "Route",
+            "requestId": "Request ID",
+            "requestIdHint": "Use this ID to correlate with server logs",
+            "noData": "No Metadata Available",
+            "noDataHint": "This event was recorded before metadata capture was enabled"
+        },
+        "export": {
+            "button": "Export CSV",
+            "exporting": "Exporting...",
+            "dateRangeRequired": "Please select a date range to export",
+            "success": "Export completed successfully"
         }
     },
     "theme": {

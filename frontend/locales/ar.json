@@ -34,7 +34,8 @@
         "summary": "ملخص",
         "notProvided": "غير متوفر",
         "unknownPatient": "مريض غير معروف",
-        "notAssigned": "غير معين"
+        "notAssigned": "غير معين",
+        "justNow": "الآن"
     },
     "nav": {
         "home": "الرئيسية",
@@ -196,13 +197,10 @@
         "invalidDate": "يرجى اختيار تاريخ صالح (اليوم إلى 60 يومًا قادمًا)",
         "workingHours": "ساعات العمل",
         "ticketDetails": "تفاصيل التذكرة",
-        "details": "التفاصيل",
+        "timelineAndNotes": "الجدول الزمني والملاحظات",
         "timestamps": "التوقيتات",
         "assignedTo": "مُعين إلى",
         "unassigned": "غير مُعين",
-        "deadline": "الموعد النهائي",
-        "acceptedAt": "تم القبول في",
-        "completedAt": "تم الإكمال في",
         "noDescription": "لا يوجد وصف",
         "unknownPatient": "مريض غير معروف"
     },
@@ -379,7 +377,16 @@
         "topDepartments": "الأعلى",
         "allDepartments": "الكل",
         "showAll": "عرض الكل",
-        "collapse": "طي"
+        "unknown": "غير معروف",
+        "down": "معطل",
+        "appInfo": "معلومات التطبيق",
+        "version": "الإصدار",
+        "environment": "البيئة",
+        "debugMode": "وضع التصحيح",
+        "driver": "المحرك",
+        "failedJobs": "المهام الفاشلة",
+        "used": "مستخدم",
+        "free": "متاح"
     },
     "slaMonitor": {
         "title": "مراقبة SLA",
@@ -500,19 +507,86 @@
     },
     "audit": {
         "title": "سجل المراجعة",
-        "subtitle": "تتبع جميع أنشطة وتغييرات التذاكر",
+        "subtitle": "سجل مراجعة للامتثال والمساءلة",
         "allEvents": "جميع الأحداث",
         "system": "النظام",
         "on": "على",
         "ticket": "التذكرة",
+        "by": "بواسطة",
+        "target": "الهدف",
+        "today": "اليوم",
+        "yesterday": "أمس",
+        "showing": "عرض",
+        "of": "من",
+        "totalRecords": "إجمالي السجلات",
+        "assignedTo": "تم التعيين إلى",
+        "viewTechnicalDetails": "عرض التفاصيل التقنية",
+        "refresh": "تحديث",
+        "clearFilters": "مسح الفلاتر",
+        "searchPlaceholder": "بحث التذاكر، المستخدمين...",
+        "allRoles": "جميع الأدوار",
+        "allDepartments": "جميع الأقسام",
+        "dateFrom": "من",
+        "dateTo": "إلى",
+        "perPage": "لكل صفحة",
+        "onlyWithChanges": "الأحداث مع تغييرات فقط",
+        "hasDiff": "يحتوي على تغييرات",
+        "tryAdjustFilters": "جرب تعديل الفلاتر",
+        "viewTicket": "عرض التذكرة",
+        "filters": {
+            "allActions": "جميع الإجراءات",
+            "ticketId": "التذكرة #",
+            "reset": "إعادة تعيين"
+        },
         "events": {
             "created": "تم الإنشاء",
             "accepted": "تم القبول",
+            "started": "بدأ",
             "completed": "تم الإكمال",
             "status_changed": "تغيير الحالة",
             "note_added": "إضافة ملاحظة",
             "priority_changed": "تغيير الأولوية",
-            "assigned": "تم التعيين"
+            "assigned": "تم التعيين",
+            "cancelled": "تم الإلغاء"
+        },
+        "detail": {
+            "title": "تفاصيل الحدث",
+            "summaryTab": "الملخص",
+            "changesTab": "التغييرات",
+            "rawTab": "JSON الخام",
+            "metadataTab": "البيانات الوصفية",
+            "noChanges": "لا توجد تغييرات مسجلة",
+            "fieldChanged": "تم تغيير {field}",
+            "from": "من",
+            "to": "إلى"
+        },
+        "summary": {
+            "created": "{actor} أنشأ التذكرة #{ticket}",
+            "accepted": "{actor} قبل التذكرة #{ticket}",
+            "started": "{actor} بدأ العمل على التذكرة #{ticket}",
+            "completed": "{actor} أكمل التذكرة #{ticket}",
+            "status_changed": "{actor} غيّر الحالة من {from} إلى {to}",
+            "note_added": "{actor} أضاف ملاحظة للتذكرة #{ticket}",
+            "priority_changed": "{actor} غيّر الأولوية من {from} إلى {to}",
+            "assigned": "{actor} عيّن التذكرة #{ticket} إلى {assignee}",
+            "cancelled": "{actor} ألغى التذكرة #{ticket}"
+        },
+        "metadata": {
+            "ipAddress": "عنوان IP",
+            "userAgent": "وكيل المستخدم",
+            "requestDetails": "تفاصيل الطلب",
+            "method": "الطريقة",
+            "route": "المسار",
+            "requestId": "معرف الطلب",
+            "requestIdHint": "استخدم هذا المعرف للربط مع سجلات الخادم",
+            "noData": "لا توجد بيانات وصفية",
+            "noDataHint": "تم تسجيل هذا الحدث قبل تفعيل التقاط البيانات الوصفية"
+        },
+        "export": {
+            "button": "تصدير CSV",
+            "exporting": "جاري التصدير...",
+            "dateRangeRequired": "يرجى تحديد نطاق تاريخ للتصدير",
+            "success": "تم التصدير بنجاح"
         }
     },
     "theme": {

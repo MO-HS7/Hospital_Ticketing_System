@@ -1,131 +1,162 @@
 <template>
   <NuxtLayout name="admin">
-    <div class="space-y-6">
-      <!-- Header -->
-      <div>
-        <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">{{ $t('commandCenter.systemHealth') }}</h1>
-        <p class="text-sm text-[var(--color-text-muted)] mt-1">{{ $t('commandCenter.systemHealthSubtitle') }}</p>
+    <div class="space-y-4 md:space-y-6">
+      <!-- Header (subtitle only - layout provides title) -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <p class="text-sm text-slate-600 dark:text-white/60">{{ $t('commandCenter.systemHealthSubtitle') }}</p>
+        </div>
+        <button 
+          @click="fetchHealth" 
+          class="h-10 px-4 flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/20 transition shrink-0"
+          :disabled="loading"
+        >
+          <Icon name="arrows-rotate" :class="{ 'animate-spin': loading }" />
+          <span class="hidden sm:inline">{{ $t('common.refresh') }}</span>
+        </button>
       </div>
 
-      <!-- Overall Status -->
-      <div class="card p-6">
+      <!-- Overall Status Card -->
+      <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6">
         <div class="flex items-center gap-4">
           <div 
-            class="w-16 h-16 rounded-full flex items-center justify-center"
+            class="w-16 h-16 rounded-2xl flex items-center justify-center"
             :class="overallStatusClass"
           >
-            <svg v-if="health.overall === 'healthy'" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <svg v-else class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <Icon :name="overallIcon" size="xl" class="text-current" />
           </div>
-          <div>
+          <div class="flex-1 min-w-0">
             <p class="text-2xl font-bold" :class="overallTextClass">
               {{ $t(`commandCenter.${health.overall || 'healthy'}`) }}
             </p>
-            <p class="text-sm text-[var(--color-text-muted)]">
+            <p v-if="health.reason_summary" class="text-sm text-slate-600 dark:text-white/60 mt-1">
+              {{ health.reason_summary }}
+            </p>
+            <p class="text-xs text-slate-400 dark:text-white/40 mt-1">
               {{ $t('commandCenter.lastUpdated') }}: {{ health.timestamp ? new Date(health.timestamp).toLocaleTimeString() : '-' }}
             </p>
           </div>
-          <button @click="fetchHealth" class="ms-auto btn-ghost p-2" :disabled="loading">
-            <svg class="w-5 h-5" :class="{ 'animate-spin': loading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
         </div>
       </div>
 
-      <!-- Service Cards -->
+      <!-- Service Cards Grid -->
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Database -->
-        <div class="card p-4">
+        <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 min-h-[140px] flex flex-col">
           <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="getStatusBg(health.database?.status)">
-              <svg class="w-5 h-5" :class="getStatusColor(health.database?.status)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-              </svg>
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center" :class="getStatusBg(health.database?.status)">
+              <Icon name="database" size="md" :class="getStatusColor(health.database?.status)" />
             </div>
-            <div>
-              <p class="font-medium">{{ $t('commandCenter.database') }}</p>
-              <p class="text-sm" :class="getStatusColor(health.database?.status)">
-                {{ $t(`commandCenter.${health.database?.status || 'unknown'}`) }}
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-slate-900 dark:text-white">{{ $t('commandCenter.database') }}</p>
+              <p class="text-sm font-medium" :class="getStatusColor(health.database?.status)">
+                {{ getStatusLabel(health.database?.status) }}
               </p>
             </div>
           </div>
-          <div v-if="health.database?.latency_ms" class="text-xs text-[var(--color-text-muted)]">
-            {{ $t('commandCenter.latency') }}: {{ health.database.latency_ms }}ms
+          <div class="mt-auto space-y-1">
+            <div v-if="health.database?.latency_ms" class="flex justify-between text-xs text-slate-500 dark:text-white/50">
+              <span>{{ $t('commandCenter.latency') }}</span>
+              <span class="font-medium">{{ health.database.latency_ms }}ms</span>
+            </div>
+            <div v-if="health.database?.error" class="text-xs text-red-600 dark:text-red-400 truncate" :title="health.database.error">
+              {{ health.database.error }}
+            </div>
           </div>
         </div>
 
         <!-- Cache -->
-        <div class="card p-4">
+        <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 min-h-[140px] flex flex-col">
           <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="getStatusBg(health.cache?.status)">
-              <svg class="w-5 h-5" :class="getStatusColor(health.cache?.status)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center" :class="getStatusBg(health.cache?.status)">
+              <Icon name="bolt" size="md" :class="getStatusColor(health.cache?.status)" />
             </div>
-            <div>
-              <p class="font-medium">{{ $t('commandCenter.cache') }}</p>
-              <p class="text-sm" :class="getStatusColor(health.cache?.status)">
-                {{ $t(`commandCenter.${health.cache?.status || 'unknown'}`) }}
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-slate-900 dark:text-white">{{ $t('commandCenter.cache') }}</p>
+              <p class="text-sm font-medium" :class="getStatusColor(health.cache?.status)">
+                {{ getStatusLabel(health.cache?.status) }}
               </p>
             </div>
           </div>
-          <div v-if="health.cache?.driver" class="text-xs text-[var(--color-text-muted)]">
-            Driver: {{ health.cache.driver }}
+          <div class="mt-auto space-y-1">
+            <div v-if="health.cache?.driver" class="flex justify-between text-xs text-slate-500 dark:text-white/50">
+              <span>{{ $t('commandCenter.driver') }}</span>
+              <span class="font-medium">{{ health.cache.driver }}</span>
+            </div>
+            <div v-if="health.cache?.latency_ms" class="flex justify-between text-xs text-slate-500 dark:text-white/50">
+              <span>{{ $t('commandCenter.latency') }}</span>
+              <span class="font-medium">{{ health.cache.latency_ms }}ms</span>
+            </div>
           </div>
         </div>
 
         <!-- Queue -->
-        <div class="card p-4">
+        <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 min-h-[140px] flex flex-col">
           <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="getStatusBg(health.queue?.status)">
-              <svg class="w-5 h-5" :class="getStatusColor(health.queue?.status)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center" :class="getStatusBg(health.queue?.status)">
+              <Icon name="list" size="md" :class="getStatusColor(health.queue?.status)" />
             </div>
-            <div>
-              <p class="font-medium">{{ $t('commandCenter.queue') }}</p>
-              <p class="text-sm" :class="getStatusColor(health.queue?.status)">
-                {{ $t(`commandCenter.${health.queue?.status || 'unknown'}`) }}
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-slate-900 dark:text-white">{{ $t('commandCenter.queue') }}</p>
+              <p class="text-sm font-medium" :class="getStatusColor(health.queue?.status)">
+                {{ getStatusLabel(health.queue?.status) }}
               </p>
             </div>
           </div>
-          <div v-if="health.queue?.failed_jobs !== undefined" class="text-xs text-[var(--color-text-muted)]">
-            Failed jobs: {{ health.queue.failed_jobs }}
+          <div class="mt-auto space-y-1">
+            <div v-if="health.queue?.failed_jobs !== undefined" class="flex justify-between text-xs text-slate-500 dark:text-white/50">
+              <span>{{ $t('commandCenter.failedJobs') }}</span>
+              <span class="font-medium" :class="health.queue.failed_jobs > 0 ? 'text-amber-600' : ''">{{ health.queue.failed_jobs }}</span>
+            </div>
           </div>
         </div>
 
         <!-- Storage -->
-        <div class="card p-4">
+        <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 min-h-[140px] flex flex-col">
           <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="getStatusBg(health.storage?.status)">
-              <svg class="w-5 h-5" :class="getStatusColor(health.storage?.status)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-              </svg>
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center" :class="getStatusBg(health.storage?.status)">
+              <Icon name="folder" size="md" :class="getStatusColor(health.storage?.status)" />
             </div>
-            <div>
-              <p class="font-medium">{{ $t('commandCenter.storage') }}</p>
-              <p class="text-sm" :class="getStatusColor(health.storage?.status)">
-                {{ $t(`commandCenter.${health.storage?.status || 'unknown'}`) }}
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-slate-900 dark:text-white">{{ $t('commandCenter.storage') }}</p>
+              <p class="text-sm font-medium" :class="getStatusColor(health.storage?.status)">
+                {{ getStatusLabel(health.storage?.status) }}
               </p>
             </div>
           </div>
-          <div v-if="health.storage?.used_percent" class="space-y-1">
-            <div class="flex justify-between text-xs text-[var(--color-text-muted)]">
-              <span>Used: {{ health.storage.used_percent }}%</span>
-              <span>Free: {{ health.storage.free_gb }}GB</span>
+          <div v-if="health.storage?.used_percent !== undefined" class="mt-auto space-y-2">
+            <div class="flex justify-between text-xs text-slate-500 dark:text-white/50">
+              <span>{{ $t('commandCenter.used') }}: {{ health.storage.used_percent }}%</span>
+              <span>{{ $t('commandCenter.free') }}: {{ health.storage.free_gb }}GB</span>
             </div>
-            <div class="w-full h-2 bg-[var(--color-bg-tertiary)] rounded-full overflow-hidden">
+            <div class="w-full h-2 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
               <div 
                 class="h-full rounded-full transition-all"
-                :class="health.storage.used_percent > 90 ? 'bg-red-500' : health.storage.used_percent > 70 ? 'bg-amber-500' : 'bg-green-500'"
+                :class="health.storage.used_percent > 90 ? 'bg-red-500' : health.storage.used_percent > 70 ? 'bg-amber-500' : 'bg-emerald-500'"
                 :style="{ width: `${health.storage.used_percent}%` }"
               />
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- App Info Section -->
+      <div v-if="health.app" class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+        <h3 class="text-sm font-medium text-slate-900 dark:text-white mb-3">{{ $t('commandCenter.appInfo') }}</h3>
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-500 dark:text-white/50">{{ $t('commandCenter.version') }}</span>
+            <span class="font-medium text-slate-900 dark:text-white">{{ health.app.version }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-500 dark:text-white/50">{{ $t('commandCenter.environment') }}</span>
+            <span class="font-medium text-slate-900 dark:text-white">{{ health.app.environment }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-500 dark:text-white/50">{{ $t('commandCenter.debugMode') }}</span>
+            <span class="font-medium" :class="health.app.debug ? 'text-amber-600' : 'text-emerald-600'">
+              {{ health.app.debug ? $t('common.on') : $t('common.off') }}
+            </span>
           </div>
         </div>
       </div>
@@ -138,35 +169,58 @@ definePageMeta({ layout: false, middleware: ['auth'] })
 
 const config = useRuntimeConfig()
 const { token } = useAuth()
+const { t } = useI18n()
 
 const loading = ref(false)
 const health = ref<any>({})
 
 const overallStatusClass = computed(() => ({
-  'bg-green-100 dark:bg-green-900/30 text-green-600': health.value.overall === 'healthy',
+  'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600': health.value.overall === 'healthy',
   'bg-amber-100 dark:bg-amber-900/30 text-amber-600': health.value.overall === 'degraded',
-  'bg-red-100 dark:bg-red-900/30 text-red-600': health.value.overall === 'unhealthy',
+  'bg-red-100 dark:bg-red-900/30 text-red-600': health.value.overall === 'unhealthy' || health.value.overall === 'down',
+  'bg-slate-100 dark:bg-slate-800 text-slate-600': !health.value.overall,
 }))
 
 const overallTextClass = computed(() => ({
-  'text-green-600': health.value.overall === 'healthy',
+  'text-emerald-600': health.value.overall === 'healthy',
   'text-amber-600': health.value.overall === 'degraded',
-  'text-red-600': health.value.overall === 'unhealthy',
+  'text-red-600': health.value.overall === 'unhealthy' || health.value.overall === 'down',
+  'text-slate-600': !health.value.overall,
 }))
 
+const overallIcon = computed(() => {
+  switch (health.value.overall) {
+    case 'healthy': return 'check-circle'
+    case 'degraded': return 'exclamation-triangle'
+    case 'unhealthy':
+    case 'down': return 'times-circle'
+    default: return 'circle-question'
+  }
+})
+
 const getStatusBg = (status?: string) => ({
-  'bg-green-100 dark:bg-green-900/30': status === 'healthy',
+  'bg-emerald-100 dark:bg-emerald-900/30': status === 'healthy',
   'bg-amber-100 dark:bg-amber-900/30': status === 'degraded' || status === 'warning',
-  'bg-red-100 dark:bg-red-900/30': status === 'unhealthy',
-  'bg-gray-100 dark:bg-gray-800': !status || status === 'unknown',
+  'bg-red-100 dark:bg-red-900/30': status === 'unhealthy' || status === 'down',
+  'bg-slate-100 dark:bg-slate-800': !status || status === 'unknown',
 })
 
 const getStatusColor = (status?: string) => ({
-  'text-green-600': status === 'healthy',
+  'text-emerald-600': status === 'healthy',
   'text-amber-600': status === 'degraded' || status === 'warning',
-  'text-red-600': status === 'unhealthy',
-  'text-gray-600': !status || status === 'unknown',
+  'text-red-600': status === 'unhealthy' || status === 'down',
+  'text-slate-500 dark:text-slate-400': !status || status === 'unknown',
 })
+
+// Get translated status label with fallback
+const getStatusLabel = (status?: string): string => {
+  if (!status) return t('commandCenter.unknown')
+  // Try to translate, fallback to capitalized status
+  const key = `commandCenter.${status}`
+  const translated = t(key)
+  // If translation returns the key itself, capitalize the status
+  return translated === key ? status.charAt(0).toUpperCase() + status.slice(1) : translated
+}
 
 const fetchHealth = async () => {
   loading.value = true

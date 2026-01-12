@@ -1,12 +1,12 @@
 <template>
   <NuxtLayout name="admin">
-    <div class="space-y-8">
+    <div class="space-y-4 sm:space-y-6 lg:space-y-8">
       <!-- Header: Date + SLA Pressure Bar -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <!-- Left: Date + Refresh -->
-        <div class="flex items-center gap-3">
-          <span class="text-sm text-[var(--color-text-muted)]">{{ currentDate }}</span>
-          <button @click="refreshAll" class="btn-ghost p-2 rounded-full hover:bg-[var(--color-bg-tertiary)]" :disabled="loading">
+        <div class="flex items-center gap-2 sm:gap-3">
+          <span class="text-xs sm:text-sm text-[var(--color-text-muted)]">{{ currentDate }}</span>
+          <button @click="refreshAll" class="btn-ghost p-1.5 sm:p-2 rounded-full hover:bg-[var(--color-bg-tertiary)] touch-target-sm" :disabled="loading">
             <Icon name="refresh" size="sm" :spin="loading" />
           </button>
         </div>
@@ -19,7 +19,7 @@
           <span class="text-xs font-medium text-[var(--color-text-muted)]">SLA</span>
           
           <!-- Segmented Pressure Bar -->
-          <div class="flex items-center h-6 rounded-lg overflow-hidden bg-[var(--color-bg-tertiary)] min-w-[140px]">
+          <div class="flex items-center h-5 sm:h-6 rounded-lg overflow-hidden bg-[var(--color-bg-tertiary)] min-w-[100px] sm:min-w-[140px] flex-1 sm:flex-initial max-w-[200px] sm:max-w-none">
             <!-- On Track Segment -->
             <div 
               class="h-full flex items-center justify-center px-2 bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500 relative group/seg"
@@ -62,14 +62,14 @@
       </div>
 
       <!-- Interactive Circular Stat Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
         <!-- Active Doctors -->
         <div 
           class="flex flex-col items-center cursor-pointer group"
           @click="selectStat('doctors')"
         >
           <div 
-            class="relative w-28 h-28 mb-3 transition-transform duration-500"
+            class="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 mb-2 sm:mb-3 transition-transform duration-500"
             :class="{ 'scale-110': selectedStat === 'doctors' }"
           >
             <svg class="w-full h-full transition-transform duration-700" :class="{ '-rotate-[360deg]': selectedStat === 'doctors', '-rotate-90': selectedStat !== 'doctors' }" viewBox="0 0 100 100">
@@ -90,10 +90,10 @@
                   {{ selectedStat === 'doctors' ? metrics.staff?.doctors || 0 : metrics.staff?.doctors || 0 }}
                 </span>
               </Transition>
-              <Icon name="user-doctor" size="md" class="text-emerald-600 mt-1 transition-transform duration-300 group-hover:scale-110" />
+              <Icon name="user-doctor" size="sm" class="text-emerald-600 mt-0.5 sm:mt-1 transition-transform duration-300 group-hover:scale-110 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <p class="text-sm font-medium text-[var(--color-text-secondary)] transition-colors" :class="{ 'text-emerald-600': selectedStat === 'doctors' }">
+          <p class="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] transition-colors text-center" :class="{ 'text-emerald-600': selectedStat === 'doctors' }">
             {{ $t('commandCenter.activeDoctors') }}
           </p>
           <!-- Detail popup on select -->
@@ -110,7 +110,7 @@
           @click="selectStat('patients')"
         >
           <div 
-            class="relative w-28 h-28 mb-3 transition-transform duration-500"
+            class="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 mb-2 sm:mb-3 transition-transform duration-500"
             :class="{ 'scale-110': selectedStat === 'patients' }"
           >
             <svg class="w-full h-full transition-transform duration-700" :class="{ '-rotate-[360deg]': selectedStat === 'patients', '-rotate-90': selectedStat !== 'patients' }" viewBox="0 0 100 100">
@@ -126,11 +126,11 @@
               />
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-2xl font-bold text-emerald-600">{{ insights.today?.total || 0 }}</span>
-              <Icon name="user-group" size="md" class="text-emerald-600 mt-1 transition-transform duration-300 group-hover:scale-110" />
+              <span class="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-600">{{ insights.today?.total || 0 }}</span>
+              <Icon name="user-group" size="sm" class="text-emerald-600 mt-0.5 sm:mt-1 transition-transform duration-300 group-hover:scale-110 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <p class="text-sm font-medium text-[var(--color-text-secondary)] transition-colors" :class="{ 'text-emerald-600': selectedStat === 'patients' }">
+          <p class="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] transition-colors text-center" :class="{ 'text-emerald-600': selectedStat === 'patients' }">
             {{ $t('commandCenter.activePatients') }}
           </p>
           <Transition name="fade-slide">
@@ -146,7 +146,7 @@
           @click="selectStat('maintenance')"
         >
           <div 
-            class="relative w-28 h-28 mb-3 transition-transform duration-500"
+            class="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 mb-2 sm:mb-3 transition-transform duration-500"
             :class="{ 'scale-110': selectedStat === 'maintenance' }"
           >
             <svg class="w-full h-full transition-transform duration-700" :class="{ '-rotate-[360deg]': selectedStat === 'maintenance', '-rotate-90': selectedStat !== 'maintenance' }" viewBox="0 0 100 100">
@@ -162,11 +162,11 @@
               />
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-2xl font-bold text-emerald-600">{{ metrics.staff?.maintenance || 0 }}</span>
-              <Icon name="tools" size="md" class="text-emerald-600 mt-1 transition-transform duration-300 group-hover:scale-110" />
+              <span class="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-600">{{ metrics.staff?.maintenance || 0 }}</span>
+              <Icon name="tools" size="sm" class="text-emerald-600 mt-0.5 sm:mt-1 transition-transform duration-300 group-hover:scale-110 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <p class="text-sm font-medium text-[var(--color-text-secondary)] transition-colors" :class="{ 'text-emerald-600': selectedStat === 'maintenance' }">
+          <p class="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] transition-colors text-center" :class="{ 'text-emerald-600': selectedStat === 'maintenance' }">
             {{ $t('commandCenter.maintenanceStaff') }}
           </p>
           <Transition name="fade-slide">
@@ -182,7 +182,7 @@
           @click="selectStat('reception')"
         >
           <div 
-            class="relative w-28 h-28 mb-3 transition-transform duration-500"
+            class="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 mb-2 sm:mb-3 transition-transform duration-500"
             :class="{ 'scale-110': selectedStat === 'reception' }"
           >
             <svg class="w-full h-full transition-transform duration-700" :class="{ '-rotate-[360deg]': selectedStat === 'reception', '-rotate-90': selectedStat !== 'reception' }" viewBox="0 0 100 100">
@@ -198,11 +198,11 @@
               />
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-2xl font-bold text-emerald-600">{{ metrics.staff?.reception || 0 }}</span>
-              <Icon name="building" size="md" class="text-emerald-600 mt-1 transition-transform duration-300 group-hover:scale-110" />
+              <span class="text-lg sm:text-xl lg:text-2xl font-bold text-emerald-600">{{ metrics.staff?.reception || 0 }}</span>
+              <Icon name="building" size="sm" class="text-emerald-600 mt-0.5 sm:mt-1 transition-transform duration-300 group-hover:scale-110 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <p class="text-sm font-medium text-[var(--color-text-secondary)] transition-colors" :class="{ 'text-emerald-600': selectedStat === 'reception' }">
+          <p class="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] transition-colors text-center" :class="{ 'text-emerald-600': selectedStat === 'reception' }">
             {{ $t('commandCenter.receptionStaff') }}
           </p>
           <Transition name="fade-slide">
@@ -214,17 +214,17 @@
       </div>
 
       <!-- Charts Row -->
-      <div class="grid lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
         <!-- Department Distribution - Interactive Radial -->
-        <div class="card p-6">
-          <div class="flex items-center justify-between mb-4">
+        <div class="card p-4 sm:p-5 lg:p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3 sm:mb-4">
             <h3 class="font-semibold text-[var(--color-text-primary)]">{{ $t('commandCenter.ticketsByDept') }}</h3>
             <span class="text-xs text-[var(--color-text-muted)]">{{ totalDeptTickets }} {{ $t('nav.tickets') }}</span>
           </div>
           
           <!-- Radial Chart -->
-          <div class="relative flex items-center justify-center" style="min-height: 220px;">
-            <svg viewBox="0 0 200 200" class="w-52 h-52">
+          <div class="relative flex items-center justify-center min-h-[180px] sm:min-h-[200px] lg:min-h-[220px]">
+            <svg viewBox="0 0 200 200" class="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 lg:w-52 lg:h-52">
               <!-- Background circle -->
               <circle cx="100" cy="100" r="80" fill="none" stroke="var(--color-border)" stroke-width="24" opacity="0.3" />
               
@@ -259,7 +259,7 @@
                       </p>
                     </div>
                     <div v-else key="default">
-                      <p class="text-3xl font-bold text-[var(--color-text-primary)]">{{ totalDeptTickets }}</p>
+                      <p class="text-2xl sm:text-3xl font-bold text-[var(--color-text-primary)]">{{ totalDeptTickets }}</p>
                       <p class="text-xs text-[var(--color-text-muted)]">{{ $t('dashboard.totalTickets') }}</p>
                     </div>
                   </Transition>
@@ -267,11 +267,11 @@
               </foreignObject>
             </svg>
             
-            <!-- Hover tooltip - Icon + Name + Count only -->
+            <!-- Hover tooltip - Hidden on mobile, shown on hover for desktop -->
             <Transition name="fade">
               <div 
                 v-if="hoveredDept && getHoveredDeptData" 
-                class="absolute top-0 end-0 p-4 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] shadow-lg z-10 text-center min-w-[120px]"
+                class="hidden sm:block absolute top-0 end-0 p-3 sm:p-4 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] shadow-lg z-10 text-center min-w-[100px] sm:min-w-[120px]"
               >
                 <Icon 
                   :name="getDeptIcon(getHoveredDeptData?.slug)" 
@@ -290,12 +290,12 @@
           </div>
           
           <!-- Legend - Progressive Disclosure for 30+ Departments -->
-          <div class="mt-4">
+          <div class="mt-3 sm:mt-4">
             <!-- Top/All Toggle -->
             <div class="flex items-center justify-center gap-1 mb-3">
               <button 
                 @click="legendMode = 'top'; legendExpanded = false"
-                class="px-3 py-1 rounded-full text-[10px] font-medium transition-all"
+                class="px-2 sm:px-3 py-1 rounded-full text-[10px] font-medium transition-all touch-target-sm"
                 :class="legendMode === 'top' 
                   ? 'bg-primary-600 text-white' 
                   : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-tertiary)]/80'"
@@ -353,8 +353,8 @@
         </div>
 
         <!-- Daily Operations Snapshot -->
-        <div class="card p-6">
-          <h3 class="font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
+        <div class="card p-4 sm:p-5 lg:p-6">
+          <h3 class="font-semibold text-[var(--color-text-primary)] mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
             <Icon name="chart-bar" size="md" class="text-primary-600" />
             {{ $t('commandCenter.dailyOperations') }}
           </h3>
@@ -368,29 +368,29 @@
             </div>
             
             <!-- Pipeline Flow -->
-            <div class="flex items-end gap-2">
+            <div class="flex items-end gap-1.5 sm:gap-2">
               <!-- Pending Stage -->
               <div 
                 class="flex-1 group cursor-pointer"
                 @click="navigateToTickets('pending')"
               >
                 <div 
-                  class="relative rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-amber-500/20"
-                  :style="{ minHeight: `${Math.max(60, pendingPercent * 1.2)}px` }"
+                  class="relative rounded-lg sm:rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-amber-500/20"
+                  :style="{ minHeight: `${Math.max(50, pendingPercent * 1.2)}px` }"
                 >
-                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
-                    <Icon name="clock" size="md" class="mb-1 opacity-90" />
-                    <span class="text-xl font-bold">{{ metrics.tickets?.pending || 0 }}</span>
-                    <span class="text-[10px] font-medium opacity-80">{{ $t('dashboard.pending') }}</span>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-1.5 sm:p-2">
+                    <Icon name="clock" size="sm" class="mb-0.5 sm:mb-1 opacity-90 sm:w-5 sm:h-5" />
+                    <span class="text-base sm:text-lg lg:text-xl font-bold">{{ metrics.tickets?.pending || 0 }}</span>
+                    <span class="text-[8px] sm:text-[10px] font-medium opacity-80 text-center leading-tight">{{ $t('dashboard.pending') }}</span>
                   </div>
-                  <!-- Tooltip -->
-                  <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-amber-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
+                  <!-- Tooltip - hidden on mobile -->
+                  <div class="hidden sm:block absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-amber-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
                     {{ pendingPercent }}% · {{ $t('commandCenter.clickToView') }}
                   </div>
                 </div>
-                <!-- Connector Arrow -->
-                <div class="flex justify-center mt-1">
-                  <Icon name="arrow-down" size="xs" class="text-amber-400/50" />
+                <!-- Connector Arrow - smaller on mobile -->
+                <div class="flex justify-center mt-0.5 sm:mt-1">
+                  <Icon name="arrow-down" size="xs" class="text-amber-400/50 w-3 h-3 sm:w-4 sm:h-4" />
                 </div>
               </div>
               
@@ -400,22 +400,22 @@
                 @click="navigateToTickets('in_progress')"
               >
                 <div 
-                  class="relative rounded-xl bg-gradient-to-b from-blue-400 to-blue-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/20"
-                  :style="{ minHeight: `${Math.max(60, inProgressPercent * 1.2)}px` }"
+                  class="relative rounded-lg sm:rounded-xl bg-gradient-to-b from-blue-400 to-blue-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/20"
+                  :style="{ minHeight: `${Math.max(50, inProgressPercent * 1.2)}px` }"
                 >
-                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
-                    <Icon name="spinner" size="md" class="mb-1 opacity-90 animate-spin" />
-                    <span class="text-xl font-bold">{{ metrics.tickets?.in_progress || 0 }}</span>
-                    <span class="text-[10px] font-medium opacity-80">{{ $t('dashboard.inProgressTickets') }}</span>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-1.5 sm:p-2">
+                    <Icon name="spinner" size="sm" class="mb-0.5 sm:mb-1 opacity-90 animate-spin sm:w-5 sm:h-5" />
+                    <span class="text-base sm:text-lg lg:text-xl font-bold">{{ metrics.tickets?.in_progress || 0 }}</span>
+                    <span class="text-[8px] sm:text-[10px] font-medium opacity-80 text-center leading-tight">{{ $t('dashboard.inProgressTickets') }}</span>
                   </div>
-                  <!-- Tooltip -->
-                  <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-blue-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
+                  <!-- Tooltip - hidden on mobile -->
+                  <div class="hidden sm:block absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-blue-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
                     {{ inProgressPercent }}% · {{ $t('commandCenter.clickToView') }}
                   </div>
                 </div>
                 <!-- Connector Arrow -->
-                <div class="flex justify-center mt-1">
-                  <Icon name="arrow-down" size="xs" class="text-blue-400/50" />
+                <div class="flex justify-center mt-0.5 sm:mt-1">
+                  <Icon name="arrow-down" size="xs" class="text-blue-400/50 w-3 h-3 sm:w-4 sm:h-4" />
                 </div>
               </div>
               
@@ -425,22 +425,22 @@
                 @click="navigateToTickets('completed')"
               >
                 <div 
-                  class="relative rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-emerald-500/20"
-                  :style="{ minHeight: `${Math.max(60, completedPercent * 1.2)}px` }"
+                  class="relative rounded-lg sm:rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-emerald-500/20"
+                  :style="{ minHeight: `${Math.max(50, completedPercent * 1.2)}px` }"
                 >
-                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
-                    <Icon name="check-circle" size="md" class="mb-1 opacity-90" />
-                    <span class="text-xl font-bold">{{ metrics.tickets?.completed || 0 }}</span>
-                    <span class="text-[10px] font-medium opacity-80">{{ $t('dashboard.completed') }}</span>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-1.5 sm:p-2">
+                    <Icon name="check-circle" size="sm" class="mb-0.5 sm:mb-1 opacity-90 sm:w-5 sm:h-5" />
+                    <span class="text-base sm:text-lg lg:text-xl font-bold">{{ metrics.tickets?.completed || 0 }}</span>
+                    <span class="text-[8px] sm:text-[10px] font-medium opacity-80 text-center leading-tight">{{ $t('dashboard.completed') }}</span>
                   </div>
-                  <!-- Tooltip -->
-                  <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-emerald-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
+                  <!-- Tooltip - hidden on mobile -->
+                  <div class="hidden sm:block absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-emerald-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
                     {{ completedPercent }}% · {{ $t('commandCenter.clickToView') }}
                   </div>
                 </div>
                 <!-- Success indicator -->
-                <div class="flex justify-center mt-1">
-                  <Icon name="check" size="xs" class="text-emerald-400/50" />
+                <div class="flex justify-center mt-0.5 sm:mt-1">
+                  <Icon name="check" size="xs" class="text-emerald-400/50 w-3 h-3 sm:w-4 sm:h-4" />
                 </div>
               </div>
               
@@ -450,37 +450,37 @@
                 @click="navigateToTickets('overdue')"
               >
                 <div 
-                  class="relative rounded-xl bg-gradient-to-b from-red-400 to-red-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-red-500/20"
+                  class="relative rounded-lg sm:rounded-xl bg-gradient-to-b from-red-400 to-red-500 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-red-500/20"
                   :class="{ 'animate-pulse': (metrics.tickets?.overdue || 0) > 0 }"
-                  :style="{ minHeight: `${Math.max(60, overduePercent * 1.2)}px` }"
+                  :style="{ minHeight: `${Math.max(50, overduePercent * 1.2)}px` }"
                 >
-                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
-                    <Icon name="exclamation-triangle" size="md" class="mb-1 opacity-90" />
-                    <span class="text-xl font-bold">{{ metrics.tickets?.overdue || 0 }}</span>
-                    <span class="text-[10px] font-medium opacity-80">{{ $t('dashboard.overdueTickets') }}</span>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-1.5 sm:p-2">
+                    <Icon name="exclamation-triangle" size="sm" class="mb-0.5 sm:mb-1 opacity-90 sm:w-5 sm:h-5" />
+                    <span class="text-base sm:text-lg lg:text-xl font-bold">{{ metrics.tickets?.overdue || 0 }}</span>
+                    <span class="text-[8px] sm:text-[10px] font-medium opacity-80 text-center leading-tight">{{ $t('dashboard.overdueTickets') }}</span>
                   </div>
-                  <!-- Tooltip -->
-                  <div class="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-red-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
+                  <!-- Tooltip - hidden on mobile -->
+                  <div class="hidden sm:block absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full px-3 py-1.5 bg-red-600 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 shadow-lg pointer-events-none">
                     {{ overduePercent }}% · {{ $t('commandCenter.clickToView') }}
                   </div>
                 </div>
                 <!-- Warning indicator -->
-                <div class="flex justify-center mt-1">
-                  <Icon name="exclamation" size="xs" :class="(metrics.tickets?.overdue || 0) > 0 ? 'text-red-500' : 'text-red-400/50'" />
+                <div class="flex justify-center mt-0.5 sm:mt-1">
+                  <Icon name="exclamation" size="xs" :class="(metrics.tickets?.overdue || 0) > 0 ? 'text-red-500' : 'text-red-400/50'" class="w-3 h-3 sm:w-4 sm:h-4" />
                 </div>
               </div>
             </div>
           </div>
           
           <!-- Ticket Sources - Split Intelligence Panel -->
-          <div class="pt-4 border-t border-[var(--color-border)]">
-            <div class="flex items-center justify-between mb-4">
-              <p class="text-sm font-medium text-[var(--color-text-secondary)]">{{ $t('commandCenter.ticketSources') }}</p>
+          <div class="pt-3 sm:pt-4 border-t border-[var(--color-border)]">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 mb-3 sm:mb-4">
+              <p class="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)]">{{ $t('commandCenter.ticketSources') }}</p>
               <span class="text-xs text-[var(--color-text-muted)]">{{ sourceTotal }} {{ $t('dashboard.totalTickets') }}</span>
             </div>
             
-            <!-- Split Panels - Width Proportional to Data -->
-            <div class="flex gap-3 min-h-[120px]">
+            <!-- Split Panels - Stack on mobile, row on larger screens -->
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 min-h-[100px] sm:min-h-[120px]">
               <!-- Manual Panel -->
               <div 
                 class="group relative rounded-2xl bg-gradient-to-br from-sky-400 to-sky-600 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-sky-500/30 overflow-hidden"
@@ -494,13 +494,13 @@
                 </div>
                 
                 <!-- Content -->
-                <div class="relative h-full flex flex-col items-center justify-center p-4 text-white">
-                  <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                    <Icon name="user" size="lg" />
+                <div class="relative h-full flex flex-col items-center justify-center p-3 sm:p-4 text-white">
+                  <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 flex items-center justify-center mb-1.5 sm:mb-2 group-hover:scale-110 transition-transform">
+                    <Icon name="user" size="md" class="sm:w-6 sm:h-6" />
                   </div>
-                  <span class="text-3xl font-bold">{{ insights.source_breakdown?.manual || 0 }}</span>
-                  <span class="text-sm font-medium opacity-90">{{ $t('commandCenter.manual') }}</span>
-                  <span class="text-[10px] mt-1 px-2 py-0.5 rounded-full bg-white/20">{{ manualPercent }}%</span>
+                  <span class="text-2xl sm:text-3xl font-bold">{{ insights.source_breakdown?.manual || 0 }}</span>
+                  <span class="text-xs sm:text-sm font-medium opacity-90">{{ $t('commandCenter.manual') }}</span>
+                  <span class="text-[9px] sm:text-[10px] mt-1 px-2 py-0.5 rounded-full bg-white/20">{{ manualPercent }}%</span>
                 </div>
                 
                 <!-- Hover Tooltip -->
@@ -522,13 +522,13 @@
                 </div>
                 
                 <!-- Content -->
-                <div class="relative h-full flex flex-col items-center justify-center p-4 text-white">
-                  <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                    <Icon name="robot" size="lg" />
+                <div class="relative h-full flex flex-col items-center justify-center p-3 sm:p-4 text-white">
+                  <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 flex items-center justify-center mb-1.5 sm:mb-2 group-hover:scale-110 transition-transform">
+                    <Icon name="robot" size="md" class="sm:w-6 sm:h-6" />
                   </div>
-                  <span class="text-3xl font-bold">{{ insights.source_breakdown?.chatbot || 0 }}</span>
-                  <span class="text-sm font-medium opacity-90">{{ $t('commandCenter.chatbot') }}</span>
-                  <span class="text-[10px] mt-1 px-2 py-0.5 rounded-full bg-white/20">{{ chatbotPercent }}%</span>
+                  <span class="text-2xl sm:text-3xl font-bold">{{ insights.source_breakdown?.chatbot || 0 }}</span>
+                  <span class="text-xs sm:text-sm font-medium opacity-90">{{ $t('commandCenter.chatbot') }}</span>
+                  <span class="text-[9px] sm:text-[10px] mt-1 px-2 py-0.5 rounded-full bg-white/20">{{ chatbotPercent }}%</span>
                 </div>
                 
                 <!-- Hover Tooltip -->
@@ -542,13 +542,13 @@
       </div>
 
       <!-- ⚠️ ACTION REQUIRED - Theme-Adaptive, Urgent, Alive -->
-      <div class="relative overflow-hidden rounded-2xl p-6 shadow-xl border-2 border-red-200 dark:border-red-900/50 bg-gradient-to-br from-red-50 via-amber-50 to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div class="relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 shadow-xl border-2 border-red-200 dark:border-red-900/50 bg-gradient-to-br from-red-50 via-amber-50 to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         <!-- Animated background glow -->
         <div class="absolute inset-0 bg-gradient-to-r from-red-500/5 via-amber-500/5 to-blue-500/5 dark:from-red-500/10 dark:via-amber-500/10 dark:to-blue-500/10 animate-pulse"></div>
         
-        <h3 class="relative font-bold text-red-900 dark:text-white mb-6 flex items-center gap-3 text-lg">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-500/30">
-            <Icon name="exclamation-circle" size="lg" class="text-white" :class="{ 'animate-pulse': hasUrgentItems }" />
+        <h3 class="relative font-bold text-red-900 dark:text-white mb-4 sm:mb-6 flex flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-lg">
+          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-500/30">
+            <Icon name="exclamation-circle" size="md" class="text-white sm:w-6 sm:h-6" :class="{ 'animate-pulse': hasUrgentItems }" />
           </div>
           {{ $t('commandCenter.actionRequired') }}
           <span v-if="hasUrgentItems" class="ml-auto px-3 py-1 rounded-full bg-red-500 text-white text-xs font-bold animate-pulse shadow-lg shadow-red-500/40">
@@ -556,11 +556,11 @@
           </span>
         </h3>
         
-        <div class="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="relative grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           <!-- 🔴 SLA At Risk - RED DOMINANT with GLOW -->
           <NuxtLink 
             to="/admin/sla-monitor"
-            class="group relative overflow-hidden rounded-xl transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl border-2"
+            class="group relative overflow-hidden rounded-lg sm:rounded-xl transition-all duration-300 hover:scale-[1.02] sm:hover:scale-[1.03] hover:shadow-2xl border-2"
             :class="slaCritical + slaWarning > 0 
               ? 'bg-gradient-to-br from-red-600 via-red-500 to-rose-600 border-red-400 shadow-lg shadow-red-500/40' 
               : 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-400 shadow-lg shadow-emerald-500/30'"
@@ -568,19 +568,19 @@
             <!-- Pulse glow for critical items -->
             <div v-if="slaCritical > 0" class="absolute inset-0 bg-red-400/30 animate-pulse"></div>
             
-            <div class="relative p-5">
-              <div class="flex items-start justify-between mb-4">
-                <div class="w-14 h-14 rounded-xl bg-white/25 backdrop-blur flex items-center justify-center shadow-inner">
-                  <Icon name="clock" size="xl" class="text-white drop-shadow" :class="{ 'animate-pulse': slaCritical > 0 }" />
+            <div class="relative p-3 sm:p-4 lg:p-5">
+              <div class="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-lg sm:rounded-xl bg-white/25 backdrop-blur flex items-center justify-center shadow-inner">
+                  <Icon name="clock" size="md" class="text-white drop-shadow sm:w-6 sm:h-6 lg:w-7 lg:h-7" :class="{ 'animate-pulse': slaCritical > 0 }" />
                 </div>
-                <span class="text-4xl font-black text-white drop-shadow-lg">
+                <span class="text-2xl sm:text-3xl lg:text-4xl font-black text-white drop-shadow-lg">
                   {{ slaCritical + slaWarning }}
                 </span>
               </div>
-              <p class="text-white font-semibold text-sm drop-shadow">{{ $t('commandCenter.slaAtRisk') }}</p>
-              <p class="text-white/80 text-xs mt-1">{{ slaCritical + slaWarning > 0 ? $t('commandCenter.within30Min') : $t('commandCenter.allClear') }}</p>
-              <div class="absolute bottom-3 end-3">
-                <Icon name="arrow-right" size="sm" class="text-white/60 group-hover:translate-x-1 group-hover:text-white transition-all" />
+              <p class="text-white font-semibold text-xs sm:text-sm drop-shadow">{{ $t('commandCenter.slaAtRisk') }}</p>
+              <p class="text-white/80 text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ slaCritical + slaWarning > 0 ? $t('commandCenter.within30Min') : $t('commandCenter.allClear') }}</p>
+              <div class="absolute bottom-2 sm:bottom-3 end-2 sm:end-3">
+                <Icon name="arrow-right" size="xs" class="text-white/60 group-hover:translate-x-1 group-hover:text-white transition-all sm:w-4 sm:h-4" />
               </div>
             </div>
           </NuxtLink>
@@ -588,26 +588,26 @@
           <!-- 🟠 Emergency Pending - AMBER/ORANGE with WARNING GLOW -->
           <NuxtLink 
             to="/admin/tickets?priority=urgent"
-            class="group relative overflow-hidden rounded-xl transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl border-2"
+            class="group relative overflow-hidden rounded-lg sm:rounded-xl transition-all duration-300 hover:scale-[1.02] sm:hover:scale-[1.03] hover:shadow-2xl border-2"
             :class="(metrics.tickets?.overdue || 0) > 0 
               ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 border-amber-400 shadow-lg shadow-amber-500/40' 
               : 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-400 shadow-lg shadow-emerald-500/30'"
           >
             <div v-if="(metrics.tickets?.overdue || 0) > 0" class="absolute inset-0 bg-amber-300/30 animate-pulse"></div>
             
-            <div class="relative p-5">
-              <div class="flex items-start justify-between mb-4">
-                <div class="w-14 h-14 rounded-xl bg-white/25 backdrop-blur flex items-center justify-center shadow-inner">
-                  <Icon name="exclamation-triangle" size="xl" class="text-white drop-shadow" :class="{ 'animate-bounce': (metrics.tickets?.overdue || 0) > 0 }" />
+            <div class="relative p-3 sm:p-4 lg:p-5">
+              <div class="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-lg sm:rounded-xl bg-white/25 backdrop-blur flex items-center justify-center shadow-inner">
+                  <Icon name="exclamation-triangle" size="md" class="text-white drop-shadow sm:w-6 sm:h-6 lg:w-7 lg:h-7" :class="{ 'animate-bounce': (metrics.tickets?.overdue || 0) > 0 }" />
                 </div>
-                <span class="text-4xl font-black text-white drop-shadow-lg">
+                <span class="text-2xl sm:text-3xl lg:text-4xl font-black text-white drop-shadow-lg">
                   {{ metrics.tickets?.overdue || 0 }}
                 </span>
               </div>
-              <p class="text-white font-semibold text-sm drop-shadow">{{ $t('commandCenter.emergencyPending') }}</p>
-              <p class="text-white/80 text-xs mt-1">{{ (metrics.tickets?.overdue || 0) > 0 ? $t('commandCenter.urgentPriority') : $t('commandCenter.allClear') }}</p>
-              <div class="absolute bottom-3 end-3">
-                <Icon name="arrow-right" size="sm" class="text-white/60 group-hover:translate-x-1 group-hover:text-white transition-all" />
+              <p class="text-white font-semibold text-xs sm:text-sm drop-shadow">{{ $t('commandCenter.emergencyPending') }}</p>
+              <p class="text-white/80 text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ (metrics.tickets?.overdue || 0) > 0 ? $t('commandCenter.urgentPriority') : $t('commandCenter.allClear') }}</p>
+              <div class="absolute bottom-2 sm:bottom-3 end-2 sm:end-3">
+                <Icon name="arrow-right" size="xs" class="text-white/60 group-hover:translate-x-1 group-hover:text-white transition-all sm:w-4 sm:h-4" />
               </div>
             </div>
           </NuxtLink>
@@ -615,24 +615,24 @@
           <!-- 💳 Awaiting Payment - BLUE/CYAN ACTIONABLE -->
           <NuxtLink 
             to="/admin/tickets?status=awaiting_payment"
-            class="group relative overflow-hidden rounded-xl transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl border-2"
+            class="group relative overflow-hidden rounded-lg sm:rounded-xl transition-all duration-300 hover:scale-[1.02] sm:hover:scale-[1.03] hover:shadow-2xl border-2"
             :class="(metrics.tickets?.pending || 0) > 0 
               ? 'bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 border-blue-400 shadow-lg shadow-blue-500/40' 
               : 'bg-gradient-to-br from-slate-500 to-slate-600 border-slate-400 shadow-lg shadow-slate-500/30'"
           >
-            <div class="relative p-5">
-              <div class="flex items-start justify-between mb-4">
-                <div class="w-14 h-14 rounded-xl bg-white/25 backdrop-blur flex items-center justify-center shadow-inner">
-                  <Icon name="credit-card" size="xl" class="text-white drop-shadow" />
+            <div class="relative p-3 sm:p-4 lg:p-5">
+              <div class="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-lg sm:rounded-xl bg-white/25 backdrop-blur flex items-center justify-center shadow-inner">
+                  <Icon name="credit-card" size="md" class="text-white drop-shadow sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                 </div>
-                <span class="text-4xl font-black text-white drop-shadow-lg">
+                <span class="text-2xl sm:text-3xl lg:text-4xl font-black text-white drop-shadow-lg">
                   {{ metrics.tickets?.pending || 0 }}
                 </span>
               </div>
-              <p class="text-white font-semibold text-sm drop-shadow">{{ $t('commandCenter.awaitingPayment') }}</p>
-              <p class="text-white/80 text-xs mt-1">{{ $t('commandCenter.receptionAction') }}</p>
-              <div class="absolute bottom-3 end-3">
-                <Icon name="arrow-right" size="sm" class="text-white/60 group-hover:translate-x-1 group-hover:text-white transition-all" />
+              <p class="text-white font-semibold text-xs sm:text-sm drop-shadow">{{ $t('commandCenter.awaitingPayment') }}</p>
+              <p class="text-white/80 text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ $t('commandCenter.receptionAction') }}</p>
+              <div class="absolute bottom-2 sm:bottom-3 end-2 sm:end-3">
+                <Icon name="arrow-right" size="xs" class="text-white/60 group-hover:translate-x-1 group-hover:text-white transition-all sm:w-4 sm:h-4" />
               </div>
             </div>
           </NuxtLink>
@@ -640,21 +640,21 @@
           <!-- 📅 Today Summary - PURPLE NEUTRAL -->
           <NuxtLink 
             to="/admin/tickets"
-            class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-600 border-2 border-purple-400 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
+            class="group relative overflow-hidden rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-600 border-2 border-purple-400 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-[1.02] sm:hover:scale-[1.03] hover:shadow-2xl"
           >
-            <div class="relative p-5">
-              <div class="flex items-start justify-between mb-4">
-                <div class="w-14 h-14 rounded-xl bg-white/25 backdrop-blur flex items-center justify-center shadow-inner">
-                  <Icon name="calendar" size="xl" class="text-white drop-shadow" />
+            <div class="relative p-3 sm:p-4 lg:p-5">
+              <div class="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-lg sm:rounded-xl bg-white/25 backdrop-blur flex items-center justify-center shadow-inner">
+                  <Icon name="calendar" size="md" class="text-white drop-shadow sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                 </div>
-                <span class="text-4xl font-black text-white drop-shadow-lg">
+                <span class="text-2xl sm:text-3xl lg:text-4xl font-black text-white drop-shadow-lg">
                   {{ metrics.tickets?.total || 0 }}
                 </span>
               </div>
-              <p class="text-white font-semibold text-sm drop-shadow">{{ $t('commandCenter.todaySummary') }}</p>
-              <p class="text-white/80 text-xs mt-1">{{ metrics.tickets?.completed || 0 }} {{ $t('commandCenter.completed') }} · {{ todayCompletionRate }}%</p>
-              <div class="absolute bottom-3 end-3">
-                <Icon name="arrow-right" size="sm" class="text-white/60 group-hover:translate-x-1 group-hover:text-white transition-all" />
+              <p class="text-white font-semibold text-xs sm:text-sm drop-shadow">{{ $t('commandCenter.todaySummary') }}</p>
+              <p class="text-white/80 text-[10px] sm:text-xs mt-0.5 sm:mt-1">{{ metrics.tickets?.completed || 0 }} {{ $t('commandCenter.completed') }} · {{ todayCompletionRate }}%</p>
+              <div class="absolute bottom-2 sm:bottom-3 end-2 sm:end-3">
+                <Icon name="arrow-right" size="xs" class="text-white/60 group-hover:translate-x-1 group-hover:text-white transition-all sm:w-4 sm:h-4" />
               </div>
             </div>
           </NuxtLink>
@@ -662,21 +662,21 @@
       </div>
       
       <!-- 🛡️ SYSTEM HEALTH - Calm, Stable, Reassuring -->
-      <div class="rounded-2xl bg-gradient-to-br from-teal-50 via-cyan-50 to-sky-50 dark:from-teal-950/30 dark:via-cyan-950/30 dark:to-sky-950/30 p-6 border border-teal-200/50 dark:border-teal-800/30">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="font-semibold text-teal-800 dark:text-teal-200 flex items-center gap-3">
-            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
-              <Icon name="shield-check" class="text-white" />
+      <div class="rounded-xl sm:rounded-2xl bg-gradient-to-br from-teal-50 via-cyan-50 to-sky-50 dark:from-teal-950/30 dark:via-cyan-950/30 dark:to-sky-950/30 p-4 sm:p-5 lg:p-6 border border-teal-200/50 dark:border-teal-800/30">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4 sm:mb-6">
+          <h3 class="font-semibold text-teal-800 dark:text-teal-200 flex flex-wrap items-center gap-2 sm:gap-3 text-sm sm:text-base">
+            <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-md sm:rounded-lg bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center">
+              <Icon name="shield-check" class="text-white w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             {{ $t('commandCenter.systemHealth') }}
             <!-- All Systems OK indicator -->
-            <span v-if="allSystemsHealthy" class="px-2.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 text-xs font-medium">
+            <span v-if="allSystemsHealthy" class="px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 text-[10px] sm:text-xs font-medium">
               ✓ {{ $t('commandCenter.allSystemsOk') }}
             </span>
           </h3>
           <NuxtLink 
             to="/admin/system-health"
-            class="text-xs text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 transition-colors"
+            class="text-[10px] sm:text-xs text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 transition-colors"
           >
             {{ $t('commandCenter.viewDetails') }}
             <Icon name="arrow-right" size="xs" />
@@ -710,21 +710,21 @@
           
           <!-- Cache -->
           <div 
-            class="group p-4 rounded-xl bg-white/60 dark:bg-slate-800/40 border border-teal-100 dark:border-teal-800/30 transition-all cursor-pointer hover:bg-white dark:hover:bg-slate-800/60 hover:shadow-sm"
+            class="group p-2.5 sm:p-3 lg:p-4 rounded-lg sm:rounded-xl bg-white/60 dark:bg-slate-800/40 border border-teal-100 dark:border-teal-800/30 transition-all cursor-pointer hover:bg-white dark:hover:bg-slate-800/60 hover:shadow-sm"
             @click="navigateToSystemHealth"
           >
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 flex items-center justify-center">
-                <Icon name="bolt" class="text-teal-600 dark:text-teal-400" />
+            <div class="flex items-center gap-2 sm:gap-3">
+              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-md sm:rounded-lg bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 flex items-center justify-center shrink-0">
+                <Icon name="bolt" class="text-teal-600 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div class="flex-1">
-                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('commandCenter.cache') }}</p>
-                <div class="flex items-center gap-1.5 mt-0.5">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{{ $t('commandCenter.cache') }}</p>
+                <div class="flex items-center gap-1 sm:gap-1.5 mt-0.5">
                   <span 
-                    class="w-2 h-2 rounded-full"
+                    class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full"
                     :class="systemHealth.cache?.status === 'healthy' ? 'bg-teal-500' : systemHealth.cache?.status === 'degraded' ? 'bg-amber-500' : 'bg-red-500'"
                   ></span>
-                  <span class="text-xs" :class="systemHealth.cache?.status === 'healthy' ? 'text-teal-600 dark:text-teal-400' : systemHealth.cache?.status === 'degraded' ? 'text-amber-600' : 'text-red-600'">
+                  <span class="text-[10px] sm:text-xs" :class="systemHealth.cache?.status === 'healthy' ? 'text-teal-600 dark:text-teal-400' : systemHealth.cache?.status === 'degraded' ? 'text-amber-600' : 'text-red-600'">
                     {{ $t(`commandCenter.${systemHealth.cache?.status || 'healthy'}`) }}
                   </span>
                 </div>
@@ -734,21 +734,21 @@
           
           <!-- Queue -->
           <div 
-            class="group p-4 rounded-xl bg-white/60 dark:bg-slate-800/40 border border-teal-100 dark:border-teal-800/30 transition-all cursor-pointer hover:bg-white dark:hover:bg-slate-800/60 hover:shadow-sm"
+            class="group p-2.5 sm:p-3 lg:p-4 rounded-lg sm:rounded-xl bg-white/60 dark:bg-slate-800/40 border border-teal-100 dark:border-teal-800/30 transition-all cursor-pointer hover:bg-white dark:hover:bg-slate-800/60 hover:shadow-sm"
             @click="navigateToSystemHealth"
           >
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 flex items-center justify-center">
-                <Icon name="list" class="text-teal-600 dark:text-teal-400" />
+            <div class="flex items-center gap-2 sm:gap-3">
+              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-md sm:rounded-lg bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 flex items-center justify-center shrink-0">
+                <Icon name="list" class="text-teal-600 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div class="flex-1">
-                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('commandCenter.queue') }}</p>
-                <div class="flex items-center gap-1.5 mt-0.5">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{{ $t('commandCenter.queue') }}</p>
+                <div class="flex items-center gap-1 sm:gap-1.5 mt-0.5">
                   <span 
-                    class="w-2 h-2 rounded-full"
+                    class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full"
                     :class="systemHealth.queue?.status === 'healthy' ? 'bg-teal-500' : systemHealth.queue?.status === 'degraded' ? 'bg-amber-500' : 'bg-red-500'"
                   ></span>
-                  <span class="text-xs" :class="systemHealth.queue?.status === 'healthy' ? 'text-teal-600 dark:text-teal-400' : systemHealth.queue?.status === 'degraded' ? 'text-amber-600' : 'text-red-600'">
+                  <span class="text-[10px] sm:text-xs" :class="systemHealth.queue?.status === 'healthy' ? 'text-teal-600 dark:text-teal-400' : systemHealth.queue?.status === 'degraded' ? 'text-amber-600' : 'text-red-600'">
                     {{ $t(`commandCenter.${systemHealth.queue?.status || 'healthy'}`) }}
                   </span>
                 </div>
@@ -758,21 +758,21 @@
           
           <!-- Storage -->
           <div 
-            class="group p-4 rounded-xl bg-white/60 dark:bg-slate-800/40 border border-teal-100 dark:border-teal-800/30 transition-all cursor-pointer hover:bg-white dark:hover:bg-slate-800/60 hover:shadow-sm"
+            class="group p-2.5 sm:p-3 lg:p-4 rounded-lg sm:rounded-xl bg-white/60 dark:bg-slate-800/40 border border-teal-100 dark:border-teal-800/30 transition-all cursor-pointer hover:bg-white dark:hover:bg-slate-800/60 hover:shadow-sm"
             @click="navigateToSystemHealth"
           >
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 flex items-center justify-center">
-                <Icon name="folder" class="text-teal-600 dark:text-teal-400" />
+            <div class="flex items-center gap-2 sm:gap-3">
+              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-md sm:rounded-lg bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 flex items-center justify-center shrink-0">
+                <Icon name="folder" class="text-teal-600 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div class="flex-1">
-                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('commandCenter.storage') }}</p>
-                <div class="flex items-center gap-1.5 mt-0.5">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{{ $t('commandCenter.storage') }}</p>
+                <div class="flex items-center gap-1 sm:gap-1.5 mt-0.5">
                   <span 
-                    class="w-2 h-2 rounded-full"
+                    class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full"
                     :class="systemHealth.storage?.status === 'healthy' ? 'bg-teal-500' : systemHealth.storage?.status === 'degraded' ? 'bg-amber-500' : 'bg-red-500'"
                   ></span>
-                  <span class="text-xs" :class="systemHealth.storage?.status === 'healthy' ? 'text-teal-600 dark:text-teal-400' : systemHealth.storage?.status === 'degraded' ? 'text-amber-600' : 'text-red-600'">
+                  <span class="text-[10px] sm:text-xs" :class="systemHealth.storage?.status === 'healthy' ? 'text-teal-600 dark:text-teal-400' : systemHealth.storage?.status === 'degraded' ? 'text-amber-600' : 'text-red-600'">
                     {{ $t(`commandCenter.${systemHealth.storage?.status || 'healthy'}`) }}
                   </span>
                 </div>
@@ -877,20 +877,6 @@ const allSystemsHealthy = computed(() => {
          systemHealth.value.cache?.status === 'healthy' &&
          systemHealth.value.queue?.status === 'healthy' &&
          systemHealth.value.storage?.status === 'healthy'
-})
-
-// Department Distribution (top 5, sorted by count)
-const topDepartments = computed(() => {
-  const stats = metrics.value.departments_stats || []
-  return [...stats]
-    .sort((a: any, b: any) => b.count - a.count)
-    .slice(0, 5)
-})
-
-const maxDeptCount = computed(() => {
-  const stats = topDepartments.value
-  if (stats.length === 0) return 1
-  return Math.max(...stats.map((d: any) => d.count))
 })
 
 // Radial Chart for Department Distribution

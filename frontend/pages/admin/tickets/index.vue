@@ -188,141 +188,178 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-bold text-[var(--color-text-primary)]">{{ pageTitle }}</h1>
-        <p class="text-sm text-[var(--color-text-muted)]">{{ pagination.total }} {{ t('nav.tickets') }}</p>
+  <div class="space-y-4 md:space-y-6">
+    <!-- Page Header: Dynamic Title (contextual) + Actions -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <p class="text-sm text-slate-500 dark:text-white/50 truncate">{{ pageTitle }}</p>
+        <span class="text-xs text-slate-500 dark:text-white/40 bg-slate-100 dark:bg-white/10 px-2.5 py-1 rounded-lg whitespace-nowrap">
+          {{ pagination.total }} {{ t('nav.tickets') }}
+        </span>
       </div>
-      <button @click="loadTickets()" class="btn-ghost text-sm">
-        <Icon name="arrows-rotate" size="sm" class="me-1" />
+      <button @click="loadTickets()" class="h-9 px-3 rounded-lg flex items-center gap-1.5 text-sm text-slate-600 dark:text-white/60 hover:bg-slate-100 dark:hover:bg-white/10 transition shrink-0">
+        <Icon name="arrows-rotate" size="sm" />
         {{ t('common.refresh') }}
       </button>
     </div>
     
-    <!-- Single-Row Filter Bar -->
-    <div class="card px-3 py-2.5 flex flex-wrap items-center gap-2">
-      <!-- Search -->
-      <div class="relative">
-        <Icon name="magnifying-glass" size="xs" class="absolute start-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
-        <input 
-          v-model="filters.search"
-          type="text"
-          :placeholder="t('common.search')"
-          class="ps-7 pe-2 py-1 w-36 rounded border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-sm"
-          @keyup.enter="onFilterChange"
-        />
-      </div>
-      
-      <!-- Department -->
-      <select 
-        v-model="filters.department"
-        class="py-1 px-2 rounded border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-sm"
-        @change="onFilterChange"
-      >
-        <option value="">{{ t('adminTickets.allDepartments') }}</option>
-        <option v-for="dept in departments" :key="dept.id" :value="dept.id">
-          {{ locale === 'ar' ? dept.name_ar : dept.name_en }}
-        </option>
-      </select>
-      
-      <!-- Status -->
-      <select v-model="filters.status" class="py-1 px-2 rounded border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-sm" @change="onFilterChange">
-        <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-      </select>
-      
-      <!-- Priority -->
-      <select v-model="filters.priority" class="py-1 px-2 rounded border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-sm" @change="onFilterChange">
-        <option v-for="opt in priorityOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-      </select>
-      
-      <!-- Source -->
-      <select v-model="filters.source" class="py-1 px-2 rounded border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-sm" @change="onFilterChange">
-        <option v-for="opt in sourceOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-      </select>
-      
-      <!-- SLA -->
-      <select v-model="filters.sla" class="py-1 px-2 rounded border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-sm" @change="onFilterChange">
-        <option v-for="opt in slaOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-      </select>
-      
-      <!-- Reset -->
-      <button v-if="hasActiveFilters" @click="resetFilters" class="text-sm text-red-600 hover:underline ms-auto">
-        {{ t('adminTickets.resetFilters') }}
-      </button>
-    </div>
-    
-    <!-- Table -->
-    <div class="card overflow-hidden">
-      <div v-if="loading" class="p-6 space-y-3">
-        <div v-for="i in 5" :key="i" class="animate-pulse flex items-center gap-3">
-          <div class="h-6 w-6 bg-[var(--color-bg-tertiary)] rounded"></div>
-          <div class="flex-1 h-4 bg-[var(--color-bg-tertiary)] rounded"></div>
-          <div class="w-16 h-4 bg-[var(--color-bg-tertiary)] rounded"></div>
+    <!-- Filter Bar Card -->
+    <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3">
+        <!-- Search -->
+        <div class="sm:col-span-2 md:col-span-3 relative">
+          <Icon name="magnifying-glass" size="sm" class="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
+          <input 
+            v-model="filters.search"
+            type="text"
+            :placeholder="t('common.search')"
+            class="h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 ps-10 pe-4 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition"
+            @keyup.enter="onFilterChange"
+          />
+        </div>
+        
+        <!-- Department -->
+        <div class="md:col-span-2">
+          <select 
+            v-model="filters.department"
+            class="h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-sm text-slate-900 dark:text-white shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition cursor-pointer appearance-none"
+            @change="onFilterChange"
+          >
+            <option value="">{{ t('adminTickets.allDepartments') }}</option>
+            <option v-for="dept in departments" :key="dept.id" :value="dept.id">
+              {{ locale === 'ar' ? dept.name_ar : dept.name_en }}
+            </option>
+          </select>
+        </div>
+        
+        <!-- Status -->
+        <div class="md:col-span-2">
+          <select 
+            v-model="filters.status" 
+            class="h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-sm text-slate-900 dark:text-white shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition cursor-pointer appearance-none" 
+            @change="onFilterChange"
+          >
+            <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+        
+        <!-- Priority -->
+        <div class="md:col-span-2">
+          <select 
+            v-model="filters.priority" 
+            class="h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-sm text-slate-900 dark:text-white shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition cursor-pointer appearance-none" 
+            @change="onFilterChange"
+          >
+            <option v-for="opt in priorityOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+        
+        <!-- Source -->
+        <div class="md:col-span-1">
+          <select 
+            v-model="filters.source" 
+            class="h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-sm text-slate-900 dark:text-white shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition cursor-pointer appearance-none" 
+            @change="onFilterChange"
+          >
+            <option v-for="opt in sourceOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+        
+        <!-- SLA -->
+        <div class="md:col-span-2">
+          <select 
+            v-model="filters.sla" 
+            class="h-11 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-sm text-slate-900 dark:text-white shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition cursor-pointer appearance-none" 
+            @change="onFilterChange"
+          >
+            <option v-for="opt in slaOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
         </div>
       </div>
       
-      <div v-else-if="error" class="p-8 text-center">
-        <Icon name="exclamation-triangle" size="lg" class="text-red-500 mb-2" />
-        <p class="text-[var(--color-text-muted)]">{{ error }}</p>
-        <button @click="loadTickets()" class="btn-primary mt-3 text-sm">{{ t('common.retry') }}</button>
+      <!-- Reset Filters -->
+      <div v-if="hasActiveFilters" class="flex justify-end mt-3 pt-3 border-t border-slate-100 dark:border-white/5">
+        <button @click="resetFilters" class="h-9 px-3 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition flex items-center gap-1.5">
+          <Icon name="x" size="sm" />
+          {{ t('adminTickets.resetFilters') }}
+        </button>
+      </div>
+    </div>
+    
+    <!-- Table Card -->
+    <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden">
+      <!-- Loading -->
+      <div v-if="loading" class="p-8 space-y-3">
+        <div v-for="i in 5" :key="i" class="animate-pulse flex items-center gap-3">
+          <div class="h-6 w-6 bg-slate-200 dark:bg-white/10 rounded"></div>
+          <div class="flex-1 h-4 bg-slate-200 dark:bg-white/10 rounded"></div>
+          <div class="w-16 h-4 bg-slate-200 dark:bg-white/10 rounded"></div>
+        </div>
       </div>
       
-      <div v-else-if="tickets.length === 0" class="p-8 text-center">
-        <Icon name="inbox" size="xl" class="text-[var(--color-text-muted)] opacity-40 mb-2" />
-        <p class="font-medium text-[var(--color-text-primary)]">{{ t('adminTickets.noTickets') }}</p>
-        <p class="text-sm text-[var(--color-text-muted)]">{{ t('adminTickets.noTicketsDesc') }}</p>
+      <!-- Error -->
+      <div v-else-if="error" class="py-16 px-4 text-center">
+        <Icon name="exclamation-triangle" size="lg" class="text-red-500 mb-3" />
+        <p class="text-slate-500 dark:text-white/50 mb-4">{{ error }}</p>
+        <button @click="loadTickets()" class="h-10 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-medium transition">{{ t('common.retry') }}</button>
       </div>
       
+      <!-- Empty -->
+      <div v-else-if="tickets.length === 0" class="py-16 px-4 text-center">
+        <Icon name="inbox" size="xl" class="text-slate-300 dark:text-white/20 mb-4" />
+        <p class="font-medium text-slate-700 dark:text-white mb-1">{{ t('adminTickets.noTickets') }}</p>
+        <p class="text-sm text-slate-500 dark:text-white/50">{{ t('adminTickets.noTicketsDesc') }}</p>
+      </div>
+      
+      <!-- Table -->
       <table v-else class="w-full text-sm">
-        <thead class="bg-[var(--color-bg-tertiary)] text-xs text-[var(--color-text-muted)] uppercase">
+        <thead class="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
           <tr>
-            <th class="px-3 py-2 text-start">ID</th>
-            <th class="px-3 py-2 text-start">{{ t('tickets.subject') }}</th>
-            <th class="px-3 py-2 text-start">{{ t('tickets.department') }}</th>
-            <th class="px-3 py-2 text-start">{{ t('tickets.status') }}</th>
-            <th class="px-3 py-2 text-start">{{ t('tickets.priority') }}</th>
-            <th class="px-3 py-2 text-start">SLA</th>
-            <th class="px-3 py-2 text-start">{{ t('tickets.createdAt') }}</th>
-            <th class="px-3 py-2"></th>
+            <th class="px-4 py-3 text-start text-xs font-semibold text-slate-600 dark:text-white/60 uppercase tracking-wider">ID</th>
+            <th class="px-4 py-3 text-start text-xs font-semibold text-slate-600 dark:text-white/60 uppercase tracking-wider">{{ t('tickets.subject') }}</th>
+            <th class="px-4 py-3 text-start text-xs font-semibold text-slate-600 dark:text-white/60 uppercase tracking-wider hidden md:table-cell">{{ t('tickets.department') }}</th>
+            <th class="px-4 py-3 text-start text-xs font-semibold text-slate-600 dark:text-white/60 uppercase tracking-wider">{{ t('tickets.status') }}</th>
+            <th class="px-4 py-3 text-start text-xs font-semibold text-slate-600 dark:text-white/60 uppercase tracking-wider hidden lg:table-cell">{{ t('tickets.priority') }}</th>
+            <th class="px-4 py-3 text-start text-xs font-semibold text-slate-600 dark:text-white/60 uppercase tracking-wider hidden lg:table-cell">SLA</th>
+            <th class="px-4 py-3 text-start text-xs font-semibold text-slate-600 dark:text-white/60 uppercase tracking-wider hidden xl:table-cell">{{ t('tickets.createdAt') }}</th>
+            <th class="px-4 py-3"></th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-[var(--color-border)]">
+        <tbody class="divide-y divide-slate-100 dark:divide-white/5">
           <tr 
             v-for="ticket in tickets" 
             :key="ticket.id"
-            class="hover:bg-[var(--color-bg-tertiary)]/50 cursor-pointer"
+            class="hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition"
             @click="viewTicket(ticket.id)"
           >
-            <td class="px-3 py-2">
-              <span class="flex items-center gap-1 text-xs">
-                <Icon :name="getSourceIcon(ticket.source)" size="xs" class="text-[var(--color-text-muted)]" />
+            <td class="px-4 py-3.5">
+              <span class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-white/50">
+                <Icon :name="getSourceIcon(ticket.source)" size="xs" />
                 #{{ String(ticket.id).slice(-4) }}
               </span>
             </td>
-            <td class="px-3 py-2 font-medium text-[var(--color-text-primary)] max-w-[200px] truncate">{{ ticket.subject }}</td>
-            <td class="px-3 py-2 text-[var(--color-text-secondary)]">{{ locale === 'ar' ? ticket.department?.name_ar : ticket.department?.name_en }}</td>
-            <td class="px-3 py-2">
-              <span :class="['px-1.5 py-0.5 rounded text-xs font-medium', getStatusClass(ticket.status)]">
+            <td class="px-4 py-3.5 font-medium text-slate-900 dark:text-white max-w-[200px] truncate">{{ ticket.subject }}</td>
+            <td class="px-4 py-3.5 text-slate-500 dark:text-white/50 hidden md:table-cell">{{ locale === 'ar' ? ticket.department?.name_ar : ticket.department?.name_en }}</td>
+            <td class="px-4 py-3.5">
+              <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', getStatusClass(ticket.status)]">
                 {{ t(`ticketStatus.${ticket.status}`) }}
               </span>
             </td>
-            <td class="px-3 py-2">
+            <td class="px-4 py-3.5 hidden lg:table-cell">
               <span :class="['flex items-center gap-1', getPriorityClass(ticket.priority)]">
                 <Icon :name="ticket.priority === 'urgent' ? 'bolt' : 'flag'" size="xs" />
                 {{ t(`priority.${ticket.priority}`) }}
               </span>
             </td>
-            <td class="px-3 py-2">
-              <span v-if="getSlaStatus(ticket)" :class="['px-1.5 py-0.5 rounded text-xs font-medium', getSlaStatus(ticket)?.class]">
+            <td class="px-4 py-3.5 hidden lg:table-cell">
+              <span v-if="getSlaStatus(ticket)" :class="['px-2 py-0.5 rounded text-xs font-medium', getSlaStatus(ticket)?.class]">
                 {{ getSlaStatus(ticket)?.label }}
               </span>
-              <span v-else class="text-[var(--color-text-muted)]">—</span>
+              <span v-else class="text-slate-400 dark:text-white/30">—</span>
             </td>
-            <td class="px-3 py-2 text-[var(--color-text-muted)]">{{ formatDate(ticket.created_at) }}</td>
-            <td class="px-3 py-2 text-end">
-              <button class="btn-ghost text-xs px-2 py-0.5" @click.stop="viewTicket(ticket.id)">
+            <td class="px-4 py-3.5 text-slate-500 dark:text-white/50 hidden xl:table-cell">{{ formatDate(ticket.created_at) }}</td>
+            <td class="px-4 py-3.5 text-end">
+              <button class="h-8 px-2.5 rounded-lg text-xs font-medium text-slate-600 dark:text-white/60 hover:bg-slate-100 dark:hover:bg-white/10 transition" @click.stop="viewTicket(ticket.id)">
                 {{ t('common.view') }}
               </button>
             </td>
@@ -331,13 +368,13 @@ onMounted(async () => {
       </table>
       
       <!-- Pagination -->
-      <div v-if="!loading && pagination.last_page > 1" class="flex items-center justify-between px-3 py-2 border-t border-[var(--color-border)] text-sm">
-        <span class="text-[var(--color-text-muted)]">{{ pagination.current_page }} / {{ pagination.last_page }}</span>
-        <div class="flex gap-1">
-          <button :disabled="pagination.current_page === 1" class="btn-ghost text-xs px-2 disabled:opacity-40" @click="loadTickets(pagination.current_page - 1)">
+      <div v-if="!loading && pagination.last_page > 1" class="p-4 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 dark:bg-white/5">
+        <span class="text-sm text-slate-500 dark:text-white/50">{{ pagination.current_page }} / {{ pagination.last_page }}</span>
+        <div class="flex gap-2">
+          <button :disabled="pagination.current_page === 1" class="h-9 px-3 rounded-lg text-sm font-medium text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition" @click="loadTickets(pagination.current_page - 1)">
             {{ t('common.previous') }}
           </button>
-          <button :disabled="pagination.current_page === pagination.last_page" class="btn-ghost text-xs px-2 disabled:opacity-40" @click="loadTickets(pagination.current_page + 1)">
+          <button :disabled="pagination.current_page === pagination.last_page" class="h-9 px-3 rounded-lg text-sm font-medium text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition" @click="loadTickets(pagination.current_page + 1)">
             {{ t('common.next') }}
           </button>
         </div>

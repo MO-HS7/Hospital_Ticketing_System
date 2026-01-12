@@ -26,15 +26,6 @@ const breachTimeline = ref<{ hour: number; count: number }[]>([])
 const topOffenders = ref<{ name: string; breachCount: number }[]>([])
 const slaRules = ref({ responseMinutes: 30, resolutionHours: 24 })
 
-// Stage configuration with semantic colors - Slot-based lifecycle
-const stageConfig: Record<string, { baseColor: string; icon: string }> = {
-  scheduled: { baseColor: 'slate', icon: 'calendar' },
-  in_queue: { baseColor: 'amber', icon: 'hourglass-start' },
-  in_progress: { baseColor: 'blue', icon: 'spinner' },
-  completed: { baseColor: 'emerald', icon: 'circle-check' },
-  breached: { baseColor: 'red', icon: 'triangle-exclamation' }
-}
-
 // Get stage label from i18n - updated for slot-based
 const getStageLabel = (stageId: string) => {
   const keyMap: Record<string, string> = {

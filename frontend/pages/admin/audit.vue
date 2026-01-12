@@ -1,190 +1,368 @@
 <template>
   <NuxtLayout name="admin">
-    <div class="space-y-6">
-      <div>
-        <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">{{ $t('audit.title') }}</h1>
-        <p class="text-[var(--color-text-muted)]">{{ $t('audit.subtitle') }}</p>
-      </div>
-
-      <!-- Filters -->
-      <div class="flex flex-wrap gap-4">
-        <select v-model="selectedEventType" class="input w-auto" @change="fetchEvents">
-          <option value="">{{ $t('audit.allEvents') }}</option>
-          <option value="created">{{ $t('audit.events.created') }}</option>
-          <option value="accepted">{{ $t('audit.events.accepted') }}</option>
-          <option value="completed">{{ $t('audit.events.completed') }}</option>
-          <option value="status_changed">{{ $t('audit.events.status_changed') }}</option>
-          <option value="note_added">{{ $t('audit.events.note_added') }}</option>
-          <option value="priority_changed">{{ $t('audit.events.priority_changed') }}</option>
-          <option value="assigned">{{ $t('audit.events.assigned') }}</option>
-        </select>
-      </div>
-
-      <!-- Error -->
-      <div v-if="error" class="p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm">
-        {{ error }}
-      </div>
-
-      <!-- Events List -->
-      <div class="card overflow-hidden">
-        <div v-if="loading" class="p-8 text-center">
-          <svg class="animate-spin w-8 h-8 mx-auto text-primary-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
-          <p class="mt-2 text-[var(--color-text-muted)]">{{ $t('common.loading') }}</p>
+    <div class="space-y-4 md:space-y-6">
+      <!-- Page Header: Subtitle + Actions (Title from layout) -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <p class="text-sm text-slate-500 dark:text-white/50">{{ $t('audit.subtitle') }}</p>
+          <span class="text-xs text-slate-500 dark:text-white/40 bg-slate-100 dark:bg-white/10 px-2.5 py-1 rounded-lg whitespace-nowrap">
+            {{ (meta?.total ?? 0).toLocaleString() }} {{ $t('audit.totalRecords') }}
+          </span>
         </div>
-
-        <div v-else-if="events.length === 0" class="p-8 text-center text-[var(--color-text-muted)]">
-          {{ $t('common.noResults') }}
+        
+        <!-- Actions Section -->
+        <div class="flex items-center gap-2 shrink-0" :class="{ 'flex-row-reverse': isRtl }">
+          <!-- Export Button -->
+          <button 
+            @click="exportCsv"
+            class="h-9 w-9 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition"
+            :disabled="exporting || !filters.from || !filters.to"
+            :title="$t('audit.export.button')"
+          >
+            <Icon v-if="exporting" name="refresh" class="animate-spin" size="sm" />
+            <Icon v-else name="download" size="sm" />
+          </button>
+          
+          <!-- Refresh Button -->
+          <button 
+            @click="fetchEvents"
+            class="h-9 w-9 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition"
+            :disabled="loading"
+            :title="$t('audit.refresh')"
+          >
+            <Icon name="refresh" size="sm" :class="{ 'animate-spin': loading }" />
+          </button>
         </div>
+      </div>
 
-        <div v-else class="divide-y divide-[var(--color-border)]">
-          <div v-for="event in events" :key="event.id" class="p-4 flex items-start gap-4">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" :class="getEventIconClass(event.event_type)">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path v-if="event.event_type === 'created'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                <path v-else-if="event.event_type === 'accepted'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                <path v-else-if="event.event_type === 'completed'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                <path v-else-if="event.event_type === 'note_added'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
+      <!-- Filter Bar Card -->
+      <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+        <!-- 12-Column Responsive Grid -->
+        <div class="grid grid-cols-12 gap-3">
+          <!-- Search (spans 12 on mobile, 6 on md, 3 on lg) -->
+          <div class="col-span-12 md:col-span-6 lg:col-span-3">
+            <input
+              v-model="filters.q"
+              type="text"
+              :placeholder="$t('audit.searchPlaceholder')"
+              class="h-11 w-full min-w-0 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-4 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition"
+            />
+          </div>
+          
+          <!-- Action Type (spans 6 on mobile, 3 on md, 2 on lg) -->
+          <div class="col-span-6 md:col-span-3 lg:col-span-2">
+            <select 
+              v-model="filters.eventType"
+              class="h-11 w-full min-w-0 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-sm text-slate-900 dark:text-white shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition cursor-pointer appearance-none"
+              @change="applyFilters"
+            >
+              <option value="">{{ $t('audit.filters.allActions') }}</option>
+              <option value="created">{{ $t('audit.events.created') }}</option>
+              <option value="accepted">{{ $t('audit.events.accepted') }}</option>
+              <option value="started">{{ $t('audit.events.started') }}</option>
+              <option value="completed">{{ $t('audit.events.completed') }}</option>
+              <option value="status_changed">{{ $t('audit.events.status_changed') }}</option>
+              <option value="note_added">{{ $t('audit.events.note_added') }}</option>
+              <option value="priority_changed">{{ $t('audit.events.priority_changed') }}</option>
+              <option value="assigned">{{ $t('audit.events.assigned') }}</option>
+              <option value="cancelled">{{ $t('audit.events.cancelled') }}</option>
+            </select>
+          </div>
+          
+          <!-- Role (spans 6 on mobile, 3 on md, 2 on lg) -->
+          <div class="col-span-6 md:col-span-3 lg:col-span-2">
+            <select 
+              v-model="filters.role"
+              class="h-11 w-full min-w-0 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-sm text-slate-900 dark:text-white shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition cursor-pointer appearance-none"
+              @change="applyFilters"
+            >
+              <option value="">{{ $t('audit.allRoles') }}</option>
+              <option value="admin">{{ $t('roles.admin') }}</option>
+              <option value="doctor">{{ $t('roles.doctor') }}</option>
+              <option value="reception">{{ $t('roles.reception') }}</option>
+              <option value="maintenance">{{ $t('roles.maintenance') }}</option>
+              <option value="patient">{{ $t('roles.patient') }}</option>
+            </select>
+          </div>
+          
+          <!-- Department (spans 12 on mobile, 6 on md, 2 on lg) -->
+          <div class="col-span-12 md:col-span-6 lg:col-span-2">
+            <select 
+              v-model="filters.departmentId"
+              class="h-11 w-full min-w-0 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-sm text-slate-900 dark:text-white shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition cursor-pointer appearance-none"
+              :disabled="departmentsLoading"
+              @change="applyFilters"
+            >
+              <option value="">{{ departmentsLoading ? $t('common.loading') : $t('audit.allDepartments') }}</option>
+              <option v-if="!departmentsLoading && departments.length === 0" value="" disabled>{{ $t('common.noResults') }}</option>
+              <option v-for="dept in departments" :key="dept.id" :value="dept.id">
+                {{ locale === 'ar' ? dept.name_ar : dept.name_en }}
+              </option>
+            </select>
+          </div>
+          
+          <!-- Date Range Group (From + To together) (spans 12 on mobile, 6 on md, 3 on lg) -->
+          <div class="col-span-12 md:col-span-6 lg:col-span-3">
+            <div class="flex gap-2">
+              <input
+                v-model="filters.from"
+                type="date"
+                :title="$t('audit.dateFrom')"
+                class="h-11 w-full min-w-0 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-sm text-slate-900 dark:text-white shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition"
+                @change="applyFilters"
+              />
+              <input
+                v-model="filters.to"
+                type="date"
+                :title="$t('audit.dateTo')"
+                class="h-11 w-full min-w-0 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 px-3 text-sm text-slate-900 dark:text-white shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition"
+                @change="applyFilters"
+              />
             </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="badge" :class="getEventBadgeClass(event.event_type)">{{ $t(`audit.events.${event.event_type}`) }}</span>
-                <span class="text-sm text-[var(--color-text-muted)]">{{ formatDate(event.created_at) }}</span>
+          </div>
+        </div>
+        
+        <!-- Filter Actions Row -->
+        <div class="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-slate-100 dark:border-white/5">
+          <!-- Has Diff Checkbox -->
+          <label class="flex items-center gap-2 text-sm text-slate-500 dark:text-white/50 cursor-pointer hover:text-slate-700 dark:hover:text-white transition">
+            <input 
+              type="checkbox" 
+              v-model="filters.hasDiff"
+              class="w-4 h-4 rounded border-slate-300 dark:border-white/20 bg-white dark:bg-black/20 text-primary-600 focus:ring-primary-500 focus:ring-offset-0"
+              @change="applyFilters"
+            />
+            {{ $t('audit.onlyWithChanges') }}
+          </label>
+          
+          <!-- Spacer -->
+          <div class="flex-1" />
+          
+          <!-- Clear Filters Button -->
+          <button 
+            v-if="hasActiveFilters" 
+            @click="resetFilters"
+            class="h-9 flex items-center gap-1.5 px-3 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition"
+          >
+            <Icon name="x" size="sm" />
+            {{ $t('audit.clearFilters') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div v-if="error" class="p-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 flex items-center gap-3">
+        <Icon name="alert-circle" />
+        <span class="flex-1 text-sm">{{ error }}</span>
+        <button @click="fetchEvents" class="text-sm font-medium hover:underline">{{ $t('common.retry') }}</button>
+      </div>
+
+      <!-- Events List Card -->
+      <div class="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden">
+        <!-- Loading Skeleton -->
+        <div v-if="loading && events.length === 0" class="divide-y divide-slate-100 dark:divide-white/5">
+          <div v-for="i in 5" :key="i" class="p-4 animate-pulse">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-white/10 shrink-0" />
+              <div class="flex-1 min-w-0 space-y-2">
+                <div class="h-4 w-24 bg-slate-200 dark:bg-white/10 rounded" />
+                <div class="h-3 w-48 bg-slate-200 dark:bg-white/10 rounded" />
+                <div class="h-3 w-32 bg-slate-200 dark:bg-white/10 rounded" />
               </div>
-              <p class="text-sm text-[var(--color-text-primary)]">
-                <span class="font-medium">{{ event.user?.name || $t('audit.system') }}</span>
-                <span class="text-[var(--color-text-secondary)]"> {{ $t('audit.on') }} </span>
-                <span class="font-medium">{{ $t('audit.ticket') }} #{{ event.ticket_id }}</span>
-                <span v-if="event.ticket?.subject" class="text-[var(--color-text-muted)]"> — {{ event.ticket.subject }}</span>
-              </p>
-              <p v-if="event.ticket?.department" class="text-xs text-[var(--color-text-muted)] mt-1">
-                {{ getDepartmentName(event.ticket.department) }} • {{ $t(`ticketType.${event.ticket.type}`) }}
-              </p>
-              <div v-if="event.meta && Object.keys(event.meta).length > 0" class="mt-2 text-xs bg-[var(--color-bg-tertiary)] rounded-lg p-2">
-                <template v-if="event.event_type === 'status_changed'">
-                  {{ event.meta.from }} → {{ event.meta.to }}
-                </template>
-                <template v-else-if="event.event_type === 'priority_changed'">
-                  {{ event.meta.from }} → {{ event.meta.to }}
-                </template>
-                <template v-else>
-                  <pre class="whitespace-pre-wrap text-[var(--color-text-muted)]">{{ JSON.stringify(event.meta, null, 2) }}</pre>
-                </template>
-              </div>
+              <div class="h-3 w-16 bg-slate-200 dark:bg-white/10 rounded shrink-0" />
             </div>
           </div>
         </div>
 
+        <!-- Empty State -->
+        <div v-else-if="events.length === 0 && !loading" class="py-16 px-4 text-center">
+          <Icon name="clipboard-list" size="xl" class="mx-auto mb-4 text-slate-300 dark:text-white/20" />
+          <p class="text-slate-700 dark:text-white font-medium mb-1">{{ $t('common.noResults') }}</p>
+          <p v-if="hasActiveFilters" class="text-sm text-slate-500 dark:text-white/50">
+            {{ $t('audit.tryAdjustFilters') }}
+          </p>
+        </div>
+
+        <!-- Event Rows -->
+        <div v-else class="divide-y divide-slate-100 dark:divide-white/5">
+          <AdminAuditEventRow 
+            v-for="event in events" 
+            :key="event.id"
+            :event="event"
+            @click="openDrawer(event)"
+          />
+        </div>
+
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="p-4 border-t border-[var(--color-border)] flex items-center justify-between">
-          <span class="text-sm text-[var(--color-text-muted)]">{{ $t('departments.showing') }} {{ events.length }} {{ $t('departments.of') }} {{ total }}</span>
-          <div class="flex gap-2">
-            <button @click="prevPage" :disabled="currentPage === 1" class="btn-ghost text-sm">{{ $t('common.previous') }}</button>
-            <button @click="nextPage" :disabled="currentPage >= totalPages" class="btn-ghost text-sm">{{ $t('common.next') }}</button>
+        <div 
+          v-if="(meta?.last_page ?? 1) > 1" 
+          class="p-4 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 dark:bg-white/5"
+        >
+          <!-- Info Section -->
+          <div class="flex items-center gap-3 text-sm text-slate-500 dark:text-white/50">
+            <span>{{ $t('audit.showing') }} {{ events.length }} {{ $t('audit.of') }} {{ meta?.total ?? 0 }}</span>
+            <span class="hidden sm:inline text-slate-300 dark:text-white/20">|</span>
+            <label class="hidden sm:flex items-center gap-2">
+              {{ $t('audit.perPage') }}:
+              <select 
+                :value="meta?.per_page ?? 25" 
+                @change="setPerPage(Number(($event.target as HTMLSelectElement).value))"
+                class="h-8 px-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-sm text-slate-900 dark:text-white outline-none"
+              >
+                <option :value="25">25</option>
+                <option :value="50">50</option>
+              </select>
+            </label>
+          </div>
+          
+          <!-- Page Navigation -->
+          <div class="flex items-center gap-2" :class="{ 'flex-row-reverse': isRtl }">
+            <button 
+              @click="prevPage" 
+              :disabled="(meta?.current_page ?? 1) <= 1" 
+              class="h-9 px-3 flex items-center gap-1.5 rounded-lg text-sm font-medium text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            >
+              <Icon name="chevron-left" size="sm" :class="{ 'rotate-180': isRtl }" />
+              <span class="hidden sm:inline">{{ $t('common.previous') }}</span>
+            </button>
+            <span class="px-3 text-sm text-slate-500 dark:text-white/50">
+              {{ meta?.current_page ?? 1 }} / {{ meta?.last_page ?? 1 }}
+            </span>
+            <button 
+              @click="nextPage" 
+              :disabled="(meta?.current_page ?? 1) >= (meta?.last_page ?? 1)" 
+              class="h-9 px-3 flex items-center gap-1.5 rounded-lg text-sm font-medium text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            >
+              <span class="hidden sm:inline">{{ $t('common.next') }}</span>
+              <Icon name="chevron-right" size="sm" :class="{ 'rotate-180': isRtl }" />
+            </button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Event Drawer -->
+    <AdminAuditEventDrawer 
+      :event="selectedEvent"
+      :open="drawerOpen"
+      @close="closeDrawer"
+    />
   </NuxtLayout>
 </template>
 
 <script setup lang="ts">
+import type { AuditEvent } from '~/composables/useAuditLog'
+
 definePageMeta({ layout: false, middleware: ['auth'] })
 
-interface EventUser { id: number; name: string; email: string }
-interface EventDepartment { id: string; name_en: string; name_ar: string }
-interface EventTicket { id: number; subject: string; type: string; department?: EventDepartment }
-interface AuditEvent {
-  id: number
-  ticket_id: number
-  user_id: number | null
-  event_type: string
-  meta: Record<string, any> | null
-  created_at: string
-  user?: EventUser | null
-  ticket?: EventTicket | null
-}
-
-interface PaginatedEvents {
-  data: AuditEvent[]
-  current_page: number
-  last_page: number
-  total: number
-}
-
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const config = useRuntimeConfig()
 const { token } = useAuth()
 
-const loading = ref(false)
-const error = ref<string | null>(null)
-const events = ref<AuditEvent[]>([])
-const currentPage = ref(1)
-const totalPages = ref(1)
-const total = ref(0)
-const selectedEventType = ref('')
+const isRtl = computed(() => locale.value === 'ar')
 
-const fetchEvents = async () => {
-  loading.value = true
-  error.value = null
+// Use audit log composable
+const {
+  events,
+  loading,
+  error,
+  meta,
+  filters,
+  hasActiveFilters,
+  fetchEvents,
+  applyFilters,
+  resetFilters,
+  nextPage,
+  prevPage,
+  setPerPage,
+} = useAuditLog()
+
+// Departments for filter
+const departments = ref<Array<{ id: string; name_en: string; name_ar: string }>>([])
+const departmentsLoading = ref(false)
+
+const fetchDepartments = async () => {
+  departmentsLoading.value = true
+  try {
+    const res = await $fetch<any>(
+      `${config.public.apiBase}/admin/departments`,
+      { headers: { Authorization: `Bearer ${token.value}` } }
+    )
+    // Handle both direct array and { data: [...] } response shapes
+    departments.value = Array.isArray(res) ? res : (res.data || [])
+  } catch (e) {
+    console.error('[audit] Failed to fetch departments:', e)
+    departments.value = []
+  } finally {
+    departmentsLoading.value = false
+  }
+}
+
+// Drawer state
+const selectedEvent = ref<AuditEvent | null>(null)
+const drawerOpen = ref(false)
+
+const openDrawer = (event: AuditEvent) => {
+  selectedEvent.value = event
+  drawerOpen.value = true
+}
+
+const closeDrawer = () => {
+  drawerOpen.value = false
+}
+
+// Export functionality
+const exporting = ref(false)
+
+const exportCsv = async () => {
+  if (!filters.from || !filters.to) {
+    alert(t('audit.export.dateRangeRequired'))
+    return
+  }
+  
+  exporting.value = true
   try {
     const params = new URLSearchParams()
-    params.set('page', String(currentPage.value))
-    if (selectedEventType.value) params.set('event_type', selectedEventType.value)
-
-    const res = await $fetch<PaginatedEvents>(`${config.public.apiBase}/admin/audit-log?${params}`, {
-      headers: { Authorization: `Bearer ${token.value}` },
-    })
-
-    events.value = res.data
-    totalPages.value = res.last_page
-    total.value = res.total
+    params.set('from', filters.from)
+    params.set('to', filters.to)
+    if (filters.eventType) params.set('event_type', filters.eventType)
+    if (filters.actorId) params.set('actor_id', filters.actorId)
+    if (filters.role) params.set('role', filters.role)
+    if (filters.departmentId) params.set('department_id', filters.departmentId)
+    
+    const response = await fetch(
+      `${config.public.apiBase}/admin/audit-log/export?${params}`,
+      {
+        headers: { Authorization: `Bearer ${token.value}` },
+      }
+    )
+    
+    if (!response.ok) {
+      const err = await response.json()
+      throw new Error(err.error || 'Export failed')
+    }
+    
+    // Download the CSV
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `audit_log_${filters.from}_${filters.to}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   } catch (e: any) {
-    error.value = e.data?.message || e.message || 'Failed to fetch audit log'
+    console.error('[audit] Export failed:', e)
+    alert(e.message || 'Export failed')
   } finally {
-    loading.value = false
+    exporting.value = false
   }
 }
 
-const prevPage = () => { if (currentPage.value > 1) { currentPage.value--; fetchEvents() } }
-const nextPage = () => { if (currentPage.value < totalPages.value) { currentPage.value++; fetchEvents() } }
-
-onMounted(() => fetchEvents())
-
-const formatDate = (value: string) => {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString(locale.value === 'ar' ? 'ar' : 'en')
-}
-
-const getDepartmentName = (dept: EventDepartment) => {
-  return locale.value === 'ar' ? dept.name_ar : dept.name_en
-}
-
-const getEventIconClass = (eventType: string) => {
-  const classes: Record<string, string> = {
-    created: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-    accepted: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
-    completed: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
-    status_changed: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
-    note_added: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
-    priority_changed: 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400',
-    assigned: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400',
-  }
-  return classes[eventType] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-}
-
-const getEventBadgeClass = (eventType: string) => {
-  const classes: Record<string, string> = {
-    created: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
-    accepted: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-    completed: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
-    status_changed: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-    note_added: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400',
-    priority_changed: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
-    assigned: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400',
-  }
-  return classes[eventType] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-}
+// Initialize
+onMounted(() => {
+  fetchDepartments()
+  fetchEvents()
+})
 </script>
