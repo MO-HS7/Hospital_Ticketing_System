@@ -433,6 +433,15 @@ class ChatbotSessionService
         $mode = $session->getState('mode', self::MODE_QA);
         $fromStep = $step;
         
+        // DEBUG: Log full session state to diagnose mode persistence
+        Log::info('[Router] processMessage entry', [
+            'session_id' => $session->id,
+            'mode_from_state' => $mode,
+            'step_from_state' => $step,
+            'full_state' => $session->state,
+            'message_preview' => mb_substr($message, 0, 30),
+        ]);
+        
         // =====================================================================
         // HARD GATE: BOOKING MODE - NO AI, NO INTENT CLASSIFICATION
         // This MUST be the first check after getting mode/step
@@ -586,6 +595,14 @@ class ChatbotSessionService
         foreach ($response['messages'] ?? [] as $msg) {
             $session->addMessage('assistant', $msg);
         }
+
+        // DEBUG: Log state before save
+        Log::info('[finalizeResponse] Saving session state', [
+            'session_id' => $session->id,
+            'mode_to_save' => $session->getState('mode'),
+            'step_to_save' => $session->getState('step'),
+            'full_state' => $session->state,
+        ]);
 
         $session->save();
 
@@ -911,6 +928,8 @@ class ChatbotSessionService
         }
         
         // Valid department - save and advance to doctor step
+        // CRITICAL: Always re-assert mode=booking to ensure persistence
+        $session->setState('mode', self::MODE_BOOKING);
         $session->setState('department_id', $department->id);
         $session->setState('department_name', $isArabic ? $department->name_ar : $department->name_en);
         $session->setState('step', self::STEP_DOCTOR);
@@ -1017,6 +1036,8 @@ class ChatbotSessionService
         }
         
         // Valid doctor - save and advance to slot step
+        // CRITICAL: Always re-assert mode=booking to ensure persistence
+        $session->setState('mode', self::MODE_BOOKING);
         $session->setState('doctor_id', $doctor->id);
         $session->setState('doctor_name', $doctor->name);
         $session->setState('step', self::STEP_SLOT);
@@ -1113,6 +1134,8 @@ class ChatbotSessionService
         }
         
         // Valid slot - save and advance to patient info
+        // CRITICAL: Always re-assert mode=booking to ensure persistence
+        $session->setState('mode', self::MODE_BOOKING);
         $session->setState('slot_start', $slotTime['start']);
         $session->setState('slot_end', $slotTime['end']);
         $session->setState('slot_date', $slotTime['date']);
@@ -1207,6 +1230,8 @@ class ChatbotSessionService
         }
         
         // Valid data - save and advance to confirmation
+        // CRITICAL: Always re-assert mode=booking to ensure persistence
+        $session->setState('mode', self::MODE_BOOKING);
         $session->setState('patient_name', $patientData['full_name']);
         $session->setState('patient_phone', $patientData['phone']);
         $session->setState('patient_age', $patientData['age']);

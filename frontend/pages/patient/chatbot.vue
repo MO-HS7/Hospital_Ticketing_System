@@ -217,13 +217,13 @@
                       </label>
                       <input
                         v-if="field.type !== 'select' && field.type !== 'textarea'"
-                        v-model="patientForm[field.name]"
+                        v-model="(patientForm as Record<string, string>)[field.name]"
                         :type="field.type"
                         class="w-full h-11 px-4 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400"
                       />
                       <select
                         v-if="field.type === 'select'"
-                        v-model="patientForm[field.name]"
+                        v-model="(patientForm as Record<string, string>)[field.name]"
                         class="w-full h-11 px-4 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white"
                       >
                         <option value="">{{ locale === 'ar' ? 'اختر...' : 'Select...' }}</option>
@@ -233,7 +233,7 @@
                       </select>
                       <textarea
                         v-if="field.type === 'textarea'"
-                        v-model="patientForm[field.name]"
+                        v-model="(patientForm as Record<string, string>)[field.name]"
                         rows="3"
                         class="w-full px-4 py-2 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white"
                       ></textarea>
@@ -733,7 +733,7 @@ const debugEnabled = computed(() => {
 // Check if Web Speech API is supported (client-only)
 const sttSupported = computed(() => {
   if (typeof window === 'undefined') return false
-  return !!(window.SpeechRecognition || (window as any).webkitSpeechRecognition)
+  return !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
 })
 
 // STT state
@@ -1480,8 +1480,8 @@ const showActionBar = computed(() => {
 })
 
 const submitPatientInfo = () => {
-  const age = patientForm.value.age
-  const gender = patientForm.value.gender
+  const age = patientForm.age
+  const gender = patientForm.gender
   
   if (!age || !gender) {
     return
@@ -1500,7 +1500,7 @@ const submitPatientInfo = () => {
   messages.value.push({ id: Date.now(), role: 'user', content: displayMsg })
   
   // Reset form
-  patientForm.value = { age: '', gender: '' }
+  Object.assign(patientForm, { full_name: '', phone: '', age: '', gender: '', national_id: '', symptoms: '' })
   showPatientForm.value = false
   
   sendMessageToApi(payload)
