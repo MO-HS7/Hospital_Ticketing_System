@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 
@@ -26,5 +27,27 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+    
+    /**
+     * Handle unauthenticated users - return JSON 401 for API requests.
+     */
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        // For API requests, always return JSON 401 (never redirect)
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json([
+                'message' => 'Unauthenticated.',
+                'error' => 'Authentication required for this endpoint.',
+            ], 401);
+        }
+        
+        // For web requests, try to redirect to login if route exists
+        if (app('router')->has('login')) {
+            return redirect()->guest(route('login'));
+        }
+        
+        // Fallback: return 401 JSON
+        return response()->json(['message' => 'Unauthenticated.'], 401);
     }
 }

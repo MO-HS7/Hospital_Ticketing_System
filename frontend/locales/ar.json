@@ -264,7 +264,36 @@
         "bookDepartment": "حجز موعد",
         "bookingPrefix": "حجز عبر المساعد الآلي: ",
         "aiPowered": "يعمل بالذكاء الاصطناعي",
-        "emergencyCall": "للطوارئ يرجى الاتصال بـ 911 فوراً"
+        "emergencyCall": "للطوارئ يرجى الاتصال بـ 911 فوراً",
+        "bookingProgress": "تقدم الحجز",
+        "online": "متصل",
+        "thinking": "يفكر...",
+        "typing": "مسار يكتب...",
+        "retry": "إعادة المحاولة",
+        "cancelBooking": "إلغاء الحجز",
+        "viewSummary": "عرض الملخص",
+        "selectDepartment": "اختيار {name}",
+        "steps": {
+            "department": "القسم",
+            "doctor": "الطبيب",
+            "info": "البيانات",
+            "payment": "الدفع",
+            "confirm": "التأكيد"
+        },
+        "contextPanel": {
+            "title": "ملخص الحجز",
+            "subtitle": "اختياراتك الحالية",
+            "pending": "في الانتظار",
+            "selectNow": "اختر الآن",
+            "nextStep": "الخطوة التالية"
+        },
+        "emergency": {
+            "title": "حالة طوارئ",
+            "subtitle": "يرجى طلب الرعاية الطبية فوراً",
+            "call911": "اتصل بالطوارئ",
+            "contactHospital": "اتصل بالمستشفى",
+            "continue": "متابعة المحادثة"
+        }
     },
     "dashboard": {
         "title": "لوحة التحكم",

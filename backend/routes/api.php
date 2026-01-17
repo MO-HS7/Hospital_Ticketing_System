@@ -18,6 +18,22 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health', \App\Http\Controllers\Api\HealthController::class);
 Route::get('/departments', [\App\Http\Controllers\Api\DepartmentController::class, 'index']); // Public for booking
 
+// Public chatbot AI status check (no secrets, read-only)
+Route::get('/chatbot/ai-status', function () {
+    $aiEnabled = (bool) config('services.chatbot.ai_enabled', false);
+    $apiKeySet = !empty(config('services.gemini.api_key'));
+    
+    return response()->json([
+        'ai_enabled' => $aiEnabled,
+        'api_key_configured' => $apiKeySet,
+        'status' => $aiEnabled && $apiKeySet ? 'active' : 'inactive',
+        'status_label' => $aiEnabled && $apiKeySet 
+            ? 'AI: Gemini (ON)' 
+            : ($aiEnabled ? 'AI: Missing Key' : 'Fallback (OFF)'),
+        'model' => config('services.gemini.model', 'gemini-2.0-flash'),
+    ]);
+});
+
 // Auth routes
 Route::prefix('auth')->group(function () {
     Route::post('/login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
@@ -104,6 +120,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Chatbot (stateful conversation with strict state machine)
     Route::prefix('chatbot')->group(function () {
         Route::post('/start', [\App\Http\Controllers\Api\ChatbotController::class, 'start']); // New session
+        Route::post('/init', [\App\Http\Controllers\Api\ChatbotController::class, 'init']); // Alias for frontend
         Route::post('/message', [\App\Http\Controllers\Api\ChatbotController::class, 'message']);
         Route::post('/analyze', [\App\Http\Controllers\Api\ChatbotController::class, 'analyze']); // Legacy
         Route::get('/session', [\App\Http\Controllers\Api\ChatbotController::class, 'session']);
@@ -111,5 +128,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/select-department', [\App\Http\Controllers\Api\ChatbotController::class, 'selectDepartment']);
         Route::post('/select-doctor', [\App\Http\Controllers\Api\ChatbotController::class, 'selectDoctor']);
         Route::post('/select-time', [\App\Http\Controllers\Api\ChatbotController::class, 'selectTime']);
+        
+        // AI Status & Metrics (admin-only)
+        Route::get('/status', [\App\Http\Controllers\Api\ChatbotController::class, 'status'])->middleware('role:admin');
+        Route::get('/metrics', [\App\Http\Controllers\Api\ChatbotController::class, 'metrics'])->middleware('role:admin');
     });
+
 });

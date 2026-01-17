@@ -37,10 +37,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Google Gemini AI Service
+    | You Agent Service (Express.js with You.com Search API)
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the You Agent Express service for RAG-style Q&A.
+    | This is the primary AI provider when configured.
+    |
+    */
+
+    'you_agent' => [
+        'url' => env('YOU_AGENT_URL'), // e.g. http://localhost:3100
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Google Gemini AI Service (Fallback)
     |--------------------------------------------------------------------------
     |
     | Configuration for Google Gemini AI integration in the chatbot.
+    | Used as fallback when You Agent is not available.
     | Set CHATBOT_AI_ENABLED=true to enable AI-powered symptom analysis.
     |
     */

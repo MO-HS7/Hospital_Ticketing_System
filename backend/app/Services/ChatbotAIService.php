@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Log;
  * AI Adapter Layer for Chatbot
  * 
  * This service provides an abstraction layer for AI-powered symptom analysis.
- * Uses Google Gemini when enabled, otherwise falls back to rule-based analysis.
+ * Prioritizes You Agent (Express service) when configured, falls back to Gemini,
+ * and finally uses rule-based analysis if both AI providers fail.
  * 
  * Performance optimizations:
  * - Departments cached for 10 minutes
@@ -21,13 +22,14 @@ use Illuminate\Support\Facades\Log;
 class ChatbotAIService
 {
     protected bool $aiEnabled;
+    protected ?string $youAgentUrl;
     protected ?string $geminiApiKey;
     protected string $geminiModel;
     protected string $geminiEndpoint;
     
     // Timing constants
-    const CONNECT_TIMEOUT = 2;    // seconds
-    const REQUEST_TIMEOUT = 8;    // seconds
+    const CONNECT_TIMEOUT = 5;    // seconds - increased for Docker networking
+    const REQUEST_TIMEOUT = 30;   // seconds - increased for You.com API (takes 10-20s)
     const CACHE_TTL = 600;        // 10 minutes
     
     // Timing logs
@@ -36,9 +38,34 @@ class ChatbotAIService
     public function __construct()
     {
         $this->aiEnabled = config('services.chatbot.ai_enabled', false);
+        $this->youAgentUrl = config('services.you_agent.url'); // e.g. http://localhost:3100
         $this->geminiApiKey = config('services.gemini.api_key');
         $this->geminiModel = config('services.gemini.model', 'gemini-2.0-flash');
         $this->geminiEndpoint = config('services.gemini.endpoint', 'https://generativelanguage.googleapis.com/v1beta/models');
+        
+        // Log You Agent configuration (safe to log URL)
+        Log::info('[ChatbotAIService] Initialized', [
+            'ai_enabled' => $this->aiEnabled,
+            'you_agent_url' => $this->youAgentUrl ?? 'NOT_CONFIGURED',
+            'has_gemini_key' => !empty($this->geminiApiKey),
+        ]);
+        
+        // Quick health check for You Agent (non-blocking)
+        if ($this->youAgentUrl) {
+            try {
+                $response = Http::connectTimeout(1)->timeout(2)->get($this->youAgentUrl . '/health');
+                $status = $response->successful() ? 'OK' : 'UNAVAILABLE';
+                Log::info('[ChatbotAIService] You Agent health check', [
+                    'status' => $status,
+                    'status_code' => $response->status(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning('[ChatbotAIService] You Agent unreachable', [
+                    'url' => $this->youAgentUrl,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     /**
@@ -47,9 +74,10 @@ class ChatbotAIService
      * @param string $message User's symptom description
      * @param string $locale User's locale (en/ar)
      * @param array $context Additional context (session_id, history)
+     * @param string|null $intent Intent type for retrieval (medical_question, medical_news, etc.)
      * @return array Structured response with messages, quick_replies, suggestions
      */
-    public function analyzeSymptoms(string $message, string $locale = 'en', array $context = []): array
+    public function analyzeSymptoms(string $message, string $locale = 'en', array $context = [], ?string $intent = null): array
     {
         $startTime = microtime(true);
         $this->timings = [];
@@ -62,32 +90,52 @@ class ChatbotAIService
         $result = null;
         $usedFallback = false;
         $fallbackReason = null;
+        $provider = 'rules'; // Default provider
 
-        // Try AI if enabled
-        if ($this->aiEnabled && $this->geminiApiKey) {
+        // 1. Try You Agent first (Express service with You.com Search API)
+        if ($this->aiEnabled && $this->youAgentUrl) {
+            $aiStart = microtime(true);
+            try {
+                $result = $this->analyzeWithYouAgent($message, $locale, $context, $intent);
+                $this->timings['you_agent_ms'] = round((microtime(true) - $aiStart) * 1000);
+                $provider = 'you';
+            } catch (\Throwable $e) {
+                $this->timings['you_agent_ms'] = round((microtime(true) - $aiStart) * 1000);
+                Log::warning('You Agent failed, trying Gemini', [
+                    'error' => $e->getMessage(),
+                    'duration_ms' => $this->timings['you_agent_ms'],
+                ]);
+            }
+        }
+        
+        // 2. Fall back to Gemini if You Agent not configured or failed
+        if (!$result && $this->aiEnabled && $this->geminiApiKey) {
             $aiStart = microtime(true);
             try {
                 $result = $this->analyzeWithGemini($message, $locale, $departments, $context);
                 $this->timings['gemini_call_ms'] = round((microtime(true) - $aiStart) * 1000);
+                $provider = 'gemini';
             } catch (\Throwable $e) {
                 $this->timings['gemini_call_ms'] = round((microtime(true) - $aiStart) * 1000);
                 $usedFallback = true;
                 $fallbackReason = $e->getMessage();
-                Log::warning('Gemini API failed, using fallback', [
+                Log::warning('Gemini API failed, using rule-based fallback', [
                     'error' => $e->getMessage(),
                     'duration_ms' => $this->timings['gemini_call_ms'],
                 ]);
             }
-        } else {
+        } elseif (!$result && !$this->youAgentUrl) {
             $usedFallback = true;
-            $fallbackReason = $this->aiEnabled ? 'no_api_key' : 'ai_disabled';
+            $fallbackReason = $this->aiEnabled ? 'no_provider_configured' : 'ai_disabled';
         }
 
-        // Use rule-based fallback
+        // 3. Use rule-based fallback
         if (!$result) {
             $fallbackStart = microtime(true);
             $result = $this->analyzeWithRules($message, $locale, $departments);
             $this->timings['fallback_ms'] = round((microtime(true) - $fallbackStart) * 1000);
+            $provider = 'rules';
+            $usedFallback = true;
         }
 
         $this->timings['total_ms'] = round((microtime(true) - $startTime) * 1000);
@@ -95,6 +143,7 @@ class ChatbotAIService
         // Log performance metrics
         Log::info('Chatbot analysis completed', [
             'timings' => $this->timings,
+            'provider' => $provider,
             'used_fallback' => $usedFallback,
             'fallback_reason' => $fallbackReason,
             'ai_enabled' => $this->aiEnabled,
@@ -102,12 +151,76 @@ class ChatbotAIService
 
         return array_merge($result, [
             'ai_powered' => !$usedFallback,
+            'provider' => $provider,
             '_debug' => [
                 'timings' => $this->timings,
+                'provider' => $provider,
                 'used_fallback' => $usedFallback,
                 'fallback_reason' => $fallbackReason,
             ],
         ]);
+    }
+
+    /**
+     * AI-powered analysis using You Agent (Express service with You.com Search API).
+     * 
+     * Calls the Express Agent's /answer endpoint for RAG-style medical Q&A.
+     */
+    protected function analyzeWithYouAgent(string $message, string $locale, array $context = [], ?string $intent = null): array
+    {
+        $url = rtrim($this->youAgentUrl, '/') . '/answer';
+        $requestId = uniqid('you_');
+        $startTime = microtime(true);
+        
+        Log::info('[YouAgent] Request', [
+            'request_id' => $requestId,
+            'url' => $url,
+            'intent' => $intent,
+            'message_preview' => mb_substr($message, 0, 50),
+        ]);
+        
+        $response = Http::connectTimeout(self::CONNECT_TIMEOUT)
+            ->timeout(self::REQUEST_TIMEOUT)
+            ->post($url, [
+                'query' => $message,
+                'locale' => $locale,
+                'intent' => $intent ?? 'medical_question',
+                'mode' => $context['mode'] ?? 'qa',
+                'context' => $context,
+            ]);
+        
+        $latency = round((microtime(true) - $startTime) * 1000);
+        
+        if (!$response->successful()) {
+            Log::error('[YouAgent] Request failed', [
+                'request_id' => $requestId,
+                'url' => $url,
+                'status' => $response->status(),
+                'latency_ms' => $latency,
+            ]);
+            throw new \RuntimeException("You Agent returned status {$response->status()}");
+        }
+        
+        Log::info('[YouAgent] Response', [
+            'request_id' => $requestId,
+            'status' => $response->status(),
+            'latency_ms' => $latency,
+        ]);
+        
+        $data = $response->json();
+        
+        // Ensure proper response format for the chatbot
+        return [
+            'intent' => $data['intent'] ?? 'medical_question',
+            'reply' => $data['reply'] ?? '',
+            'messages' => $data['reply'] ? [$data['reply']] : [],
+            'quick_replies' => $data['quick_replies'] ?? [],
+            'departments' => [], // You Agent doesn't suggest departments directly
+            'should_offer_booking' => $data['should_offer_booking'] ?? false,
+            'sources' => $data['sources'] ?? [],
+            'is_emergency' => $data['safety_flags']['is_emergency'] ?? false,
+            'provider_status' => $data['provider_status'] ?? 'ok',
+        ];
     }
 
     /**
