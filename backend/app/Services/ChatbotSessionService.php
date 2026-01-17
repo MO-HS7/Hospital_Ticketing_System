@@ -2204,29 +2204,6 @@ class ChatbotSessionService
     }
     
     /**
-     * Redirect user to current step when they go off-topic during booking.
-     */
-    protected function redirectToCurrentStep(ChatbotSession $session, string $step): array
-    {
-        $locale = $session->locale;
-        $isArabic = $locale === 'ar';
-        
-        $redirectMsg = $isArabic
-            ? 'دعنا نكمل حجز موعدك. '
-            : "Let's continue with your booking. ";
-        
-        // Re-render current step
-        return match ($step) {
-            self::STEP_DEPARTMENT => $this->renderDepartmentStep($session, $redirectMsg),
-            self::STEP_DOCTOR => $this->renderDoctorStep($session, $redirectMsg),
-            self::STEP_PATIENT_INFO => $this->renderPatientInfoStep($session, $redirectMsg),
-            self::STEP_PAYMENT => $this->renderPaymentStep($session, $redirectMsg),
-            self::STEP_CONFIRM => $this->renderConfirmStep($session, $redirectMsg),
-            default => ['messages' => [$redirectMsg], 'current_step' => $step],
-        };
-    }
-    
-    /**
      * Render department selection step.
      */
     protected function renderDepartmentStep(ChatbotSession $session, string $prefix = ''): array
